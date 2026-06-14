@@ -1,6 +1,8 @@
 const goalInput = document.querySelector("#goal");
 const userSelect = document.querySelector("#user-select");
 const runBtn = document.querySelector("#run-btn");
+const briefStatus = document.querySelector("#brief-status");
+const staffBrief = document.querySelector("#staff-brief");
 const skill = document.querySelector("#skill");
 const role = document.querySelector("#role");
 const identityStatus = document.querySelector("#identity");
@@ -40,6 +42,14 @@ function linesCard(title, lines, extra = "") {
   return `<article class="card"><strong>${escapeHtml(title)}</strong>${lines
     .map((line) => `<p>${escapeHtml(line)}</p>`)
     .join("")}${extra}</article>`;
+}
+
+function briefCard(label, value, detail, tone = "") {
+  return `<article class="brief-card ${escapeHtml(tone)}">
+    <span>${escapeHtml(label)}</span>
+    <strong>${escapeHtml(value)}</strong>
+    <p>${escapeHtml(detail)}</p>
+  </article>`;
 }
 
 function escapeHtml(value) {
@@ -87,6 +97,7 @@ function render(result) {
   score.textContent = `${packet.readiness_score}%`;
   scoreBar.value = packet.readiness_score;
   confidence.textContent = packet.confidence;
+  renderStaffBrief(result);
 
   identityCard.innerHTML = linesCard("identity adapter", [
     `${packet.user.name} · ${packet.user.title}`,
@@ -152,6 +163,23 @@ function render(result) {
     card("sources used", result.audit.sources_used.join(", ")),
     card("blocked context", result.audit.context_blocked.map((item) => `${item.id}: ${item.reasons.join("/")}`).join("; ")),
     card("runtime", `${result.audit.model_runtime.provider}; cloud calls: ${result.audit.model_runtime.cloud_calls}`),
+  ].join("");
+}
+
+function renderStaffBrief(result) {
+  const packet = result.context_packet;
+  const pendingApprovals = result.approvals.filter((approval) => approval.status === "pending").length;
+  const urgentTasks = result.tasks.filter((task) => task.priority === "high").length;
+  const blockedCount = packet.blocked_context.length;
+  const nextTask = result.tasks[0];
+  const missing = packet.missing_info[0];
+  briefStatus.textContent = pendingApprovals ? "needs review" : "on track";
+  staffBrief.innerHTML = [
+    briefCard("report readiness", `${packet.readiness_score}%`, "good enough to draft, still waiting on one key update", "ready"),
+    briefCard("needs attention", `${urgentTasks} urgent task${urgentTasks === 1 ? "" : "s"}`, nextTask ? `${nextTask.owner}: ${nextTask.title}` : "no urgent tasks right now", "attention"),
+    briefCard("waiting on", missing.owner, missing.impact, "waiting"),
+    briefCard("approval queue", `${pendingApprovals} item${pendingApprovals === 1 ? "" : "s"}`, pendingApprovals ? "review before anything leaves the org" : "nothing waiting on leadership", "approval"),
+    briefCard("safe sharing", `${blockedCount} blocked`, "sensitive notes stay inside fuze unless policy allows them", "safe"),
   ].join("");
 }
 
