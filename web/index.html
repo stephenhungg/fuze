@@ -8,28 +8,26 @@
   </head>
   <body>
     <main class="app-shell">
-      <section class="panel goal-panel">
+      <aside class="panel rail-panel">
         <div class="brand">
           <span class="mark">fz</span>
           <div>
             <h1>fuze</h1>
-            <p>federated understanding & zero-trust execution</p>
+            <p>local agent workspace</p>
           </div>
         </div>
 
-        <label for="goal">goal</label>
+        <div class="rail-section">
+          <span class="section-kicker">mission</span>
+          <strong>anderson foundation report</strong>
+          <p>grant readiness, policy checks, and approval routing.</p>
+        </div>
+
         <textarea id="goal">get us ready for the anderson foundation report</textarea>
+
         <label for="user-select">identity</label>
         <select id="user-select"></select>
         <button id="run-btn" type="button">run local agent</button>
-
-        <section class="staff-brief" aria-label="staff dashboard">
-          <div class="brief-head">
-            <span>staff dashboard</span>
-            <strong id="brief-status">checking</strong>
-          </div>
-          <div id="staff-brief" class="brief-grid"></div>
-        </section>
 
         <div class="status-grid">
           <div>
@@ -65,41 +63,48 @@
             <strong id="identity">demo-adapter</strong>
           </div>
         </div>
+      </aside>
 
-        <h2>context packet</h2>
-        <div id="identity-card" class="stack"></div>
-        <div id="org-profile" class="stack"></div>
-        <div id="context-list" class="stack"></div>
-
-        <h2>vector memory</h2>
-        <div id="ingestion-status" class="stack"></div>
-        <div id="vector-memory" class="stack"></div>
-
-        <h2>context core</h2>
-        <div id="context-core" class="stack"></div>
-
-        <h2>pitch proof</h2>
-        <div id="pitch-proof" class="stack"></div>
-
-        <h2>agent mesh</h2>
-        <div id="agent-mesh" class="stack"></div>
-
-        <h2>directory management</h2>
-        <div id="directory-management" class="stack"></div>
-      </section>
-
-      <section class="panel graph-panel">
-        <div class="panel-head">
+      <section class="panel thread-panel">
+        <header class="topbar">
           <div>
-            <h2>memory traversal</h2>
-            <p>operational context, not raw file rummaging</p>
+            <span class="section-kicker">mission thread</span>
+            <h2>get us ready for the anderson foundation report</h2>
+            <p>what staff needs to do, what fuze found, and what must be approved.</p>
           </div>
-          <span id="confidence" class="pill">idle</span>
-        </div>
-        <div id="graph" class="graph"></div>
+          <div class="topbar-status">
+            <span id="confidence" class="pill">idle</span>
+            <span class="pill">cloud <strong data-cloud-calls>0</strong></span>
+          </div>
+        </header>
 
-        <h2>blocked context</h2>
-        <div id="blocked" class="stack"></div>
+        <section class="staff-brief" aria-label="staff dashboard">
+          <div class="brief-head">
+            <span>staff dashboard</span>
+            <strong id="brief-status">checking</strong>
+          </div>
+          <div id="staff-brief" class="brief-grid"></div>
+        </section>
+
+        <section class="readiness">
+          <div>
+            <span>readiness</span>
+            <strong id="score">--%</strong>
+          </div>
+          <progress id="score-bar" max="100" value="0"></progress>
+        </section>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="tasks" type="button">tasks</button>
+          <button class="tab" data-tab="drafts" type="button">drafts</button>
+          <button class="tab" data-tab="approvals" type="button">approvals</button>
+          <button class="tab" data-tab="audit" type="button">audit</button>
+        </div>
+
+        <div id="tasks" class="tab-panel active"></div>
+        <div id="drafts" class="tab-panel"></div>
+        <div id="approvals" class="tab-panel"></div>
+        <div id="audit" class="tab-panel"></div>
 
         <h2>agent stream</h2>
         <div class="telemetry-grid">
@@ -120,33 +125,45 @@
             <strong id="approval-count">0</strong>
           </div>
         </div>
-        <div id="agent-stream" class="stack"></div>
+        <div id="agent-stream" class="stack timeline"></div>
+      </section>
+
+      <aside class="panel inspector-panel">
+        <div class="inspector-head">
+          <span class="section-kicker">inspector</span>
+          <strong>local context core</strong>
+        </div>
+
+        <h2>context core</h2>
+        <div id="context-core" class="stack"></div>
+
+        <h2>memory traversal</h2>
+        <div id="graph" class="graph"></div>
+
+        <h2>blocked context</h2>
+        <div id="blocked" class="stack"></div>
+
+        <h2>directory management</h2>
+        <div id="directory-management" class="stack"></div>
+
+        <h2>context packet</h2>
+        <div id="identity-card" class="stack"></div>
+        <div id="org-profile" class="stack"></div>
+        <div id="context-list" class="stack"></div>
+
+        <h2>runtime memory</h2>
+        <div id="ingestion-status" class="stack"></div>
+        <div id="vector-memory" class="stack"></div>
+
+        <h2>pitch proof</h2>
+        <div id="pitch-proof" class="stack"></div>
+
+        <h2>agent mesh</h2>
+        <div id="agent-mesh" class="stack"></div>
 
         <h2>onboarding</h2>
         <div id="onboarding-flow" class="stack"></div>
-      </section>
-
-      <section class="panel output-panel">
-        <div class="readiness">
-          <div>
-            <span>readiness</span>
-            <strong id="score">--%</strong>
-          </div>
-          <progress id="score-bar" max="100" value="0"></progress>
-        </div>
-
-        <div class="tabs">
-          <button class="tab active" data-tab="tasks" type="button">tasks</button>
-          <button class="tab" data-tab="drafts" type="button">drafts</button>
-          <button class="tab" data-tab="approvals" type="button">approvals</button>
-          <button class="tab" data-tab="audit" type="button">audit</button>
-        </div>
-
-        <div id="tasks" class="tab-panel active"></div>
-        <div id="drafts" class="tab-panel"></div>
-        <div id="approvals" class="tab-panel"></div>
-        <div id="audit" class="tab-panel"></div>
-      </section>
+      </aside>
     </main>
     <script src="/static/app.js"></script>
   </body>

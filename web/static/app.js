@@ -7,7 +7,7 @@ const skill = document.querySelector("#skill");
 const role = document.querySelector("#role");
 const identityStatus = document.querySelector("#identity");
 const ollama = document.querySelector("#ollama");
-const cloudCalls = document.querySelector("#cloud-calls");
+const cloudCallEls = document.querySelectorAll("#cloud-calls, [data-cloud-calls]");
 const qdrant = document.querySelector("#qdrant");
 const alwaysOn = document.querySelector("#always-on");
 const contextList = document.querySelector("#context-list");
@@ -61,6 +61,12 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function setCloudCalls(value) {
+  cloudCallEls.forEach((element) => {
+    element.textContent = value;
+  });
 }
 
 async function getJson(url, options = {}) {
@@ -265,7 +271,7 @@ function renderPreview() {
       .join("");
     userSelect.value = "morgan";
   }
-  cloudCalls.textContent = "0";
+  setCloudCalls("0");
   ollama.textContent = "gb10 live / preview fallback";
   qdrant.textContent = "gb10 live / preview fallback";
   identityStatus.textContent = "ad/entra simulator";
@@ -286,7 +292,7 @@ function renderPreview() {
 
 async function loadHealth() {
   const health = await getJson("/health");
-  cloudCalls.textContent = health.cloud_llm_calls;
+  setCloudCalls(health.cloud_llm_calls);
   ollama.textContent = health.ollama.available ? "online" : "offline fallback";
   qdrant.textContent = health.qdrant.available ? "online" : "offline fallback";
   identityStatus.textContent = health.identity.provider;
