@@ -87,6 +87,12 @@ def get_context(
             "external_output": external,
             "no_cloud_llm_calls": True,
         },
+        "memory_runtime": {
+            "vector_index": "qdrant",
+            "embedding_model": "nomic-embed-text",
+            "collection": "fuze_context",
+            "fallback": "deterministic in-memory context packet",
+        },
     }
     store.last_context = packet
     return packet

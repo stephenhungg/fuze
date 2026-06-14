@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import agent, policy, retrieval
+from . import agent, policy, retrieval, vector_memory
 from .db import DEMO_GOAL, store
 
 
@@ -71,6 +71,11 @@ class PolicyRequest(BaseModel):
     external: bool = True
 
 
+class VectorSearchRequest(BaseModel):
+    query: str = DEMO_GOAL
+    limit: int = 5
+
+
 async def ollama_status() -> dict[str, Any]:
     host = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
     try:
@@ -84,14 +89,7 @@ async def ollama_status() -> dict[str, Any]:
 
 
 async def qdrant_status() -> dict[str, Any]:
-    host = os.getenv("QDRANT_URL", "http://127.0.0.1:6333")
-    try:
-        async with httpx.AsyncClient(timeout=1.5) as client:
-            response = await client.get(f"{host}/healthz")
-            response.raise_for_status()
-        return {"available": True, "host": host}
-    except Exception as exc:
-        return {"available": False, "host": host, "error": str(exc)}
+    return await vector_memory.status()
 
 
 async def monitor_loop() -> None:
@@ -131,8 +129,10 @@ async def health() -> dict[str, Any]:
 
 
 @app.post("/demo/seed")
-def seed() -> dict[str, Any]:
-    return {"status": "seeded", "snapshot": store.seed()}
+async def seed() -> dict[str, Any]:
+    snapshot = store.seed()
+    vector_seed = await vector_memory.seed()
+    return {"status": "seeded", "snapshot": snapshot, "vector_seed": vector_seed}
 
 
 @app.post("/agent/run")
@@ -182,3 +182,8 @@ def policy_check(request: PolicyRequest) -> dict[str, Any]:
 @app.post("/tools/create_tasks")
 def create_tasks() -> dict[str, Any]:
     return {"tasks": agent.create_tasks()}
+
+
+@app.post("/tools/vector_search")
+async def vector_search(request: VectorSearchRequest) -> dict[str, Any]:
+    return await vector_memory.search(query=request.query, limit=request.limit)

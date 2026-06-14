@@ -49,7 +49,19 @@ look for:
 
 - `cloud_llm_calls: 0`
 - `always_on.enabled: true`
+- `qdrant.seeded: true`
 - `skill_label: Nonprofit Grants`
 - `readiness_score: 72`
 - three tasks
 - blocked context present
+
+## vector memory proof
+
+```bash
+curl -fsS -X POST http://127.0.0.1:8000/demo/seed
+curl -fsS -X POST http://127.0.0.1:8000/tools/vector_search \
+  -H 'Content-Type: application/json' \
+  -d '{"query":"anderson foundation volunteer hours","limit":3}'
+```
+
+expected collection: `fuze_context`.

@@ -6,6 +6,7 @@ const cloudCalls = document.querySelector("#cloud-calls");
 const qdrant = document.querySelector("#qdrant");
 const alwaysOn = document.querySelector("#always-on");
 const contextList = document.querySelector("#context-list");
+const vectorMemory = document.querySelector("#vector-memory");
 const graph = document.querySelector("#graph");
 const blocked = document.querySelector("#blocked");
 const score = document.querySelector("#score");
@@ -96,12 +97,21 @@ async function runAgent() {
   runBtn.disabled = true;
   runBtn.textContent = "running locally...";
   try {
-    await getJson("/demo/seed", { method: "POST" });
+    const seed = await getJson("/demo/seed", { method: "POST" });
     const result = await getJson("/agent/run", {
       method: "POST",
       body: JSON.stringify({ goal: goalInput.value, role: "grant_manager" }),
     });
+    const vector = await getJson("/tools/vector_search", {
+      method: "POST",
+      body: JSON.stringify({ query: goalInput.value, limit: 3 }),
+    });
     render(result);
+    vectorMemory.innerHTML = card(
+      seed.vector_seed.available ? "qdrant seeded" : "qdrant fallback",
+      `${seed.vector_seed.points || 0} points · ${seed.vector_seed.embedding_source || vector.embedding_source}`,
+      `<span class="tag">${escapeHtml(vector.hits.map((hit) => hit.chunk_id).join(", ") || "fallback context")}</span>`,
+    );
   } finally {
     runBtn.disabled = false;
     runBtn.textContent = "run local agent";

@@ -39,8 +39,10 @@ Anderson Foundation
 
 - api/ui: `fastapi` served from `api/main.py`
 - local model status: `ollama` at `OLLAMA_HOST`, default `http://127.0.0.1:11434`
+- local embeddings: `nomic-embed-text` through ollama
 - deterministic venue fallback: in-memory seed data in `api/db.py`
 - vector/runtime infra on gb10: qdrant docker container `fuze-qdrant`
+- qdrant collection: `fuze_context`, seeded through `POST /demo/seed`
 
 ## implemented endpoints
 
@@ -54,3 +56,4 @@ Anderson Foundation
 - `POST /tools/prepare_report`
 - `POST /tools/policy_check`
 - `POST /tools/create_tasks`
+- `POST /tools/vector_search`

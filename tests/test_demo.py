@@ -44,6 +44,29 @@ def test_health_reports_local_runtime_surfaces():
     assert data["always_on"]["enabled"] is True
 
 
+def test_demo_seed_reports_vector_memory_status():
+    response = client.post("/demo/seed")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "seeded"
+    assert "vector_seed" in data
+    assert "embedding_source" in data["vector_seed"]
+
+
+def test_vector_search_endpoint_has_safe_fallback_shape():
+    response = client.post(
+        "/tools/vector_search",
+        json={"query": "anderson foundation volunteer hours", "limit": 3},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["collection"] == "fuze_context"
+    assert "hits" in data
+    assert "embedding_source" in data
+
+
 def test_policy_blocks_raw_external_pii():
     response = client.post(
         "/tools/policy_check",

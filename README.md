@@ -78,6 +78,7 @@ the repo now implements a deterministic local-first vertical slice for the
 anderson foundation report workflow:
 
 - seeded nonprofit grant memory
+- local embeddings and qdrant vector memory seed/search
 - context packet retrieval
 - policy-filtered allowed and blocked context
 - readiness score, missing information, tasks, report outline, follow-up drafts
