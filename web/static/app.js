@@ -21,6 +21,12 @@ function card(title, body, extra = "") {
   return `<article class="card"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(body)}</p>${extra}</article>`;
 }
 
+function linesCard(title, lines, extra = "") {
+  return `<article class="card"><strong>${escapeHtml(title)}</strong>${lines
+    .map((line) => `<p>${escapeHtml(line)}</p>`)
+    .join("")}${extra}</article>`;
+}
+
 function escapeHtml(value) {
   return String(value)
     .replaceAll("&", "&amp;")
@@ -109,14 +115,17 @@ async function runAgent() {
     });
     const pitch = await getJson("/demo/pitch");
     render(result);
-    vectorMemory.innerHTML = card(
+    vectorMemory.innerHTML = linesCard(
       seed.vector_seed.available ? "qdrant seeded" : "qdrant fallback",
-      `${seed.vector_seed.points || 0} points\n${seed.vector_seed.embedding_source || vector.embedding_source}`,
+      [`${seed.vector_seed.points || 0} points`, seed.vector_seed.embedding_source || vector.embedding_source],
       `<span class="tag">${escapeHtml(vector.hits.map((hit) => hit.chunk_id).join(", ") || "fallback context")}</span>`,
     );
-    pitchProof.innerHTML = card(
+    pitchProof.innerHTML = linesCard(
       "rubric fit",
-      `local-first: ${pitch.rubric_mapping.local_first_always_on}\nbusiness value: ${pitch.rubric_mapping.business_value}`,
+      [
+        `local-first: ${pitch.rubric_mapping.local_first_always_on}`,
+        `business value: ${pitch.rubric_mapping.business_value}`,
+      ],
       `<span class="tag">${escapeHtml(pitch.technical_proof[3])}</span>`,
     );
   } finally {
