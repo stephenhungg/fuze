@@ -34,6 +34,7 @@ const tasksPanel = document.querySelector("#tasks");
 const draftsPanel = document.querySelector("#drafts");
 const approvalsPanel = document.querySelector("#approvals");
 const auditPanel = document.querySelector("#audit");
+let previewMode = false;
 
 function card(title, body, extra = "") {
   return `<article class="card"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(body)}</p>${extra}</article>`;
@@ -69,6 +70,218 @@ async function getJson(url, options = {}) {
   });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
   return response.json();
+}
+
+const previewUsers = [
+  { id: "morgan", name: "Morgan", title: "Grant Manager", role: "grant_manager", groups: ["cn=grant-team"] },
+  { id: "alex", name: "Alex", title: "Executive Director", role: "executive_director", groups: ["cn=executive"] },
+  { id: "casey", name: "Casey", title: "Case Manager", role: "case_manager", groups: ["cn=case-management"] },
+];
+
+const previewResult = {
+  context_packet: {
+    skill_label: "Nonprofit Grants",
+    role: "grant_manager",
+    readiness_score: 72,
+    confidence: "high",
+    user: { id: "morgan", name: "Morgan", title: "Grant Manager", email: "morgan@harborlight.local" },
+    groups: ["cn=grant-team"],
+    org_profile: {
+      name: "Harbor Light Community Services",
+      staff_count: 42,
+      volunteer_count: 186,
+      active_grants: 7,
+      risk_posture: "moderate; high sensitivity around minors, addresses, and case notes.",
+    },
+    connectors: [
+      { label: "microsoft 365 sharepoint", status: "connected" },
+      { label: "google drive", status: "connected" },
+      { label: "donor crm csv export", status: "watching" },
+      { label: "case management secure folder", status: "restricted" },
+    ],
+    metrics: [
+      { label: "may meals served", value: 1284, status: "above target" },
+      { label: "may youth attendance", value: 412, status: "above target" },
+      { label: "may volunteer hours", value: "missing", status: "waiting on Jordan" },
+      { label: "food cost variance", value: "+6.4%", status: "acceptable" },
+    ],
+    allowed_context: [
+      {
+        id: "grant_requirements-1",
+        title: "anderson reporting requirements",
+        source: "grant_requirements.txt",
+        text: "anderson foundation report due june 20. include meals served, youth attendance, may volunteer hours, budget variance, and one approved anonymized participant story.",
+        citations: ["grant_requirements.txt#chunk-1"],
+        metadata: { derived_from: "preview" },
+      },
+      {
+        id: "finance_export_may-1",
+        title: "may budget variance",
+        source: "finance_export_may.csv",
+        text: "may food purchasing ran 6.4 percent over baseline because attendance exceeded forecast. finance marked the variance acceptable.",
+        citations: ["finance_export_may.csv#chunk-1"],
+        metadata: { derived_from: "preview" },
+      },
+    ],
+    blocked_context: [
+      {
+        id: "case_notes-1",
+        title: "raw case note",
+        source: "case_notes.txt",
+        redacted_preview: "[redacted] raw case note contains minor identity and address details.",
+        reasons: ["restricted role", "pii", "external output blocked"],
+      },
+    ],
+    missing_info: [
+      {
+        label: "may volunteer hours",
+        owner: "Jordan",
+        impact: "required by the Anderson Foundation report.",
+      },
+    ],
+    graph_path: ["Anderson Foundation", "Grant Agreement", "Reporting Requirements", "Program Metrics", "Missing Volunteer Hours", "Jordan"],
+  },
+  tasks: [
+    { title: "ask Jordan for May volunteer hours", owner: "Jordan", status: "open", due: "today", priority: "high" },
+    { title: "confirm attendance data", owner: "Sarah", status: "open", due: "today", priority: "high" },
+    { title: "prepare report outline", owner: "Morgan", status: "ready", due: "jun 20", priority: "medium" },
+  ],
+  approvals: [
+    {
+      id: "approval-external-report-export",
+      title: "external report export",
+      reason: "funder-facing report needs executive review before leaving the org.",
+      source: "anderson report packet",
+      status: "pending",
+      owner_role: "executive_director",
+    },
+    {
+      id: "approval-third-anonymized-story",
+      title: "third anonymized story",
+      reason: "story is pending program lead approval.",
+      source: "story_consent_tracker.csv",
+      status: "pending",
+      owner_role: "program_lead",
+    },
+  ],
+  drafts: {
+    outline: [
+      {
+        section: "impact summary",
+        draft: "Harbor Light exceeded May meal and attendance targets while one volunteer-hours field remains pending.",
+        citations: ["program_metrics.csv#may", "grant_requirements.txt#chunk-1"],
+      },
+    ],
+    followups: [
+      {
+        to: "jordan@harborlight.local",
+        subject: "May volunteer hours for Anderson report",
+        body: "Can you send the final May volunteer hours today?",
+        approval_required: false,
+      },
+    ],
+  },
+  audit: {
+    goal: "get us ready for the anderson foundation report",
+    user: { name: "Morgan" },
+    role: "grant_manager",
+    groups: ["cn=grant-team"],
+    graph_path_traversed: ["Anderson Foundation", "Grant Agreement", "Reporting Requirements", "Program Metrics", "Missing Volunteer Hours", "Jordan"],
+    sources_used: ["grant_requirements.txt#chunk-1", "finance_export_may.csv#chunk-1"],
+    context_blocked: [{ id: "case_notes-1", reasons: ["pii", "external output blocked"] }],
+    model_runtime: { provider: "preview fallback", cloud_calls: 0 },
+  },
+};
+
+const previewIngestion = {
+  status: "preview",
+  files_seen: 13,
+  chunks_created: 64,
+  pii_chunks: 7,
+  restricted_files: ["case_notes.txt", "story_consent_tracker.csv"],
+  connector_counts: { sharepoint: 5, google_drive: 4, crm_export: 1, secure_case_folder: 3 },
+};
+
+const previewContextCore = {
+  server: { name: "fuze-context-core", style: "local-mcp", cloud_llm_calls: 0 },
+  selected_context: previewResult.context_packet.allowed_context,
+  graph_traversal: { path: previewResult.context_packet.graph_path, nodes: previewResult.context_packet.graph_path.map((label) => ({ label })) },
+  hybrid_retrieval: {
+    rank_fusion: { algorithm: "reciprocal_rank_fusion", rankers: ["dense", "lexical", "graph"] },
+    query_plan: { retrieval_stages: ["dense_vector_qdrant", "lexical_sparse_store", "graph_neighbor_expansion", "reciprocal_rank_fusion"] },
+    reranked_hits: Array.from({ length: 6 }, (_, index) => ({ chunk_id: `preview-${index}` })),
+  },
+};
+
+const previewDirectory = {
+  source: {
+    source: "microsoft entra id / active directory simulator",
+    login: "oidc/saml",
+    provisioning: "scim 2.0",
+    last_sync: "preview",
+  },
+  groups: [
+    { display_name: "executive leadership", mapped_role: "executive_director" },
+    { display_name: "grant team", mapped_role: "grant_manager" },
+    { display_name: "program staff", mapped_role: "program_lead" },
+    { display_name: "case management", mapped_role: "case_manager" },
+    { display_name: "volunteer operations", mapped_role: "volunteer_coordinator" },
+    { display_name: "board viewers", mapped_role: "board_viewer" },
+  ],
+};
+
+const previewAccess = {
+  user: { name: "Morgan", role: "grant_manager" },
+  allowed_count: 28,
+  blocked_count: 36,
+  decision: "role mapping applied before context packet assembly",
+};
+
+const previewMesh = {
+  agents: [
+    { label: "Index Agent", kind: "memory", status: "watching", description: "keeps local docs, qdrant, and graph memory fresh." },
+    { label: "Policy Agent", kind: "governance", status: "ready", description: "blocks pii and role-restricted context." },
+    { label: "Grant Readiness Agent", kind: "workflow", status: "running", description: "turns private context into tasks, drafts, and approvals." },
+  ],
+  events: [
+    { agent_id: "index-agent", type: "preview", message: "preview mode is showing the last known demo state", created_at: "static" },
+  ],
+  event_count: 1,
+};
+
+const previewEval = {
+  case_count: 3,
+  average_score: 1,
+  retrieval_contract: "dense+lexical+graph rrf with policy-aware rerank",
+  passed: true,
+  cloud_llm_calls: 0,
+};
+
+function renderPreview() {
+  previewMode = true;
+  if (!userSelect.options.length) {
+    userSelect.innerHTML = previewUsers
+      .map((user) => `<option value="${escapeHtml(user.id)}" data-role="${escapeHtml(user.role)}">${escapeHtml(user.name)} · ${escapeHtml(user.role)}</option>`)
+      .join("");
+    userSelect.value = "morgan";
+  }
+  cloudCalls.textContent = "0";
+  ollama.textContent = "gb10 live / preview fallback";
+  qdrant.textContent = "gb10 live / preview fallback";
+  identityStatus.textContent = "ad/entra simulator";
+  alwaysOn.textContent = "preview";
+  render(previewResult);
+  renderIngestion(previewIngestion);
+  renderContextCore(previewContextCore);
+  renderDirectory(previewDirectory, previewAccess);
+  renderAgents(previewMesh);
+  vectorMemory.innerHTML = linesCard("qdrant preview", ["64 ingested chunks", "nomic-embed-text on gb10"], `<span class="tag">grant_requirements.txt, volunteers.csv</span>`);
+  pitchProof.innerHTML = linesCard(
+    "rubric fit",
+    ["local-first: gb10 service, local ollama, qdrant, always-on monitor, cloud calls 0", "business value: grant readiness workflow for nonprofit teams"],
+    `<span class="tag">frontend preview; live api runs on gb10</span>`,
+  );
+  renderContextEval(previewEval);
 }
 
 async function loadHealth() {
@@ -359,6 +572,7 @@ async function runAgent() {
     const directory = await getJson("/identity/directory");
     const accessPreview = await getJson(`/identity/access-preview/${encodeURIComponent(selectedUser)}`);
     const mesh = await getJson("/agents/status");
+    previewMode = false;
     render(result);
     renderIngestion(ingestion);
     renderContextCore(context);
@@ -378,6 +592,9 @@ async function runAgent() {
       `<span class="tag">${escapeHtml(pitch.technical_proof[3])}</span>`,
     );
     renderContextEval(evalResult);
+  } catch (error) {
+    renderPreview();
+    sseStatus.textContent = "preview";
   } finally {
     runBtn.disabled = false;
     runBtn.textContent = "run local agent";
@@ -401,7 +618,7 @@ function connectEventStream() {
     renderObservability(JSON.parse(event.data));
   });
   source.addEventListener("error", () => {
-    sseStatus.textContent = "reconnecting";
+    sseStatus.textContent = previewMode ? "preview" : "reconnecting";
   });
 }
 
@@ -424,11 +641,10 @@ approvalsPanel.addEventListener("click", (event) => {
   });
 });
 loadUsers().then(runAgent).catch(() => {
-  userSelect.innerHTML = '<option value="morgan">Morgan · grant_manager</option>';
-  runAgent();
+  renderPreview();
 });
 loadHealth().catch(() => {
-  ollama.textContent = "unknown";
+  renderPreview();
 });
 getJson("/onboarding/flow").then(renderOnboarding).catch(() => {
   onboardingFlow.innerHTML = card("onboarding unavailable", "admin flow did not load.");
@@ -436,10 +652,10 @@ getJson("/onboarding/flow").then(renderOnboarding).catch(() => {
 Promise.all([getJson("/identity/directory"), getJson("/identity/access-preview/morgan")])
   .then(([directory, preview]) => renderDirectory(directory, preview))
   .catch(() => {
-    directoryManagement.innerHTML = card("directory unavailable", "identity adapter did not load.");
+    renderDirectory(previewDirectory, previewAccess);
   });
 getJson("/ingestion/status").then(renderIngestion).catch(() => {
-  ingestionStatus.innerHTML = card("ingestion unavailable", "sample corpus did not load.");
+  renderIngestion(previewIngestion);
 });
 connectEventStream();
 setInterval(() => {
