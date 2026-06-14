@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from . import policy
+from . import identity, policy
 from .db import DEMO_GOAL, store
 
 
@@ -23,8 +23,11 @@ def get_context(
     org_id: str = "harbor-light-nonprofit",
     skill: str = "nonprofit_grants",
     role: str = "grant_manager",
+    user_id: str | None = None,
     external: bool = True,
 ) -> dict[str, Any]:
+    user = identity.get_user(user_id)
+    role = role or user["role"]
     allowed_context: list[dict[str, Any]] = []
     blocked_context: list[dict[str, Any]] = []
     citations: list[str] = []
@@ -72,6 +75,14 @@ def get_context(
         "org_id": org_id,
         "skill": skill,
         "skill_label": "Nonprofit Grants",
+        "user": {
+            "id": user["id"],
+            "name": user["name"],
+            "email": user["email"],
+            "title": user["title"],
+        },
+        "role": role,
+        "groups": user["groups"],
         "graph_path": GRAPH_PATH,
         "relevant_nodes": store.graph()["nodes"],
         "evidence": allowed_context,
@@ -83,7 +94,9 @@ def get_context(
         "confidence": "high",
         "recommended_actions": recommended_actions,
         "constraints": {
+            "identity_provider": "demo-adapter",
             "role": role,
+            "groups": user["groups"],
             "external_output": external,
             "no_cloud_llm_calls": True,
         },

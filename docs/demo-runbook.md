@@ -56,10 +56,24 @@ look for:
 - `cloud_llm_calls: 0`
 - `always_on.enabled: true`
 - `qdrant.seeded: true`
+- `identity.provider: demo-adapter`
 - `skill_label: Nonprofit Grants`
 - `readiness_score: 72`
 - three tasks
 - blocked context present
+
+## identity proof
+
+in the left panel, use the identity selector:
+
+- `Morgan · grant_manager` shows grant-team context
+- `Casey · case_manager` shows role-aware blocking for external grant output
+
+the api proof:
+
+```bash
+curl -fsS http://127.0.0.1:8000/identity/users
+```
 
 ## vector memory proof
 

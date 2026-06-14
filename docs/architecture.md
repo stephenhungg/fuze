@@ -55,6 +55,15 @@ demo roles:
 role mapping determines which context enters a packet. output policy determines
 what can leave the system.
 
+implemented demo:
+
+- `GET /identity/users` returns seeded users and group mappings
+- the dashboard identity selector switches between seeded users
+- context packets include `user`, `role`, and `groups`
+- audit packets record the same identity fields
+- the demo adapter models active directory / entra-style group mapping without
+  requiring real directory setup at the venue
+
 ## a2a-style mesh
 
 target agents:

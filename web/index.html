@@ -19,6 +19,8 @@
 
         <label for="goal">goal</label>
         <textarea id="goal">get us ready for the anderson foundation report</textarea>
+        <label for="user-select">identity</label>
+        <select id="user-select"></select>
         <button id="run-btn" type="button">run local agent</button>
 
         <div class="status-grid">
@@ -46,9 +48,18 @@
             <span>always-on</span>
             <strong id="always-on">starting</strong>
           </div>
+          <div>
+            <span>role</span>
+            <strong id="role">grant_manager</strong>
+          </div>
+          <div>
+            <span>identity</span>
+            <strong id="identity">demo-adapter</strong>
+          </div>
         </div>
 
         <h2>context packet</h2>
+        <div id="identity-card" class="stack"></div>
         <div id="context-list" class="stack"></div>
 
         <h2>vector memory</h2>

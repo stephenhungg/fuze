@@ -162,6 +162,8 @@ implemented now:
 - ollama model runtime
 - qdrant vector memory
 - seeded nonprofit grant workflow
+- demo identity adapter with active directory / entra-style group-to-role mapping
+- dashboard identity switcher for role-aware context packets
 - policy-filtered context packet
 - tasks, drafts, approval packet, audit trail
 - always-on monitor
@@ -169,7 +171,8 @@ implemented now:
 
 product-next:
 
-- real identity adapter
+- real identity adapter wired to microsoft entra id, active directory, ldap, okta,
+  google workspace, or local csv import
 - persistent graph database
 - connector onboarding
 - event bus for agent-to-agent messages

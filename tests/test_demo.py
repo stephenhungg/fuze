@@ -41,6 +41,7 @@ def test_health_reports_local_runtime_surfaces():
     assert data["cloud_llm_calls"] == 0
     assert "ollama" in data
     assert "qdrant" in data
+    assert data["identity"]["provider"] == "demo-adapter"
     assert data["always_on"]["enabled"] is True
 
 
@@ -91,3 +92,51 @@ def test_policy_blocks_raw_external_pii():
     data = response.json()
     assert data["checks"][0]["status"] == "fail"
     assert "[redacted]" in data["redacted_text"]
+
+
+def test_identity_users_expose_group_role_mapping():
+    response = client.get("/identity/users")
+
+    assert response.status_code == 200
+    data = response.json()
+    roles = {user["id"]: user["role"] for user in data["users"]}
+    assert roles["morgan"] == "grant_manager"
+    assert roles["casey"] == "case_manager"
+    assert data["role_map"]["cn=grant-team"] == "grant_manager"
+
+
+def test_context_packet_records_identity_and_role():
+    response = client.post(
+        "/tools/get_context",
+        json={"goal": "get us ready for the anderson foundation report", "user_id": "morgan", "role": "grant_manager"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user"]["id"] == "morgan"
+    assert data["role"] == "grant_manager"
+    assert data["groups"] == ["cn=grant-team"]
+    assert any(item["id"] == "case-1" for item in data["blocked_context"])
+
+
+def test_case_manager_can_use_restricted_context_internally():
+    response = client.post(
+        "/tools/get_context",
+        json={"goal": "review case note internally", "user_id": "casey", "role": "case_manager"},
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    blocked_ids = {item["id"] for item in data["blocked_context"]}
+    assert "case-1" in blocked_ids
+
+    from api import retrieval
+
+    internal = retrieval.get_context(
+        goal="review case note internally",
+        user_id="casey",
+        role="case_manager",
+        external=False,
+    )
+    allowed_ids = {item["id"] for item in internal["allowed_context"]}
+    assert "case-1" in allowed_ids

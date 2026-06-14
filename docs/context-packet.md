@@ -47,3 +47,11 @@ cn=board -> board_viewer
 
 the same raw memory can produce different packets depending on the requester and
 the target output.
+
+implemented demo proof:
+
+- `morgan` belongs to `cn=grant-team` and maps to `grant_manager`
+- `casey` belongs to `cn=case-management` and maps to `case_manager`
+- the dashboard role switcher re-runs the context packet with the selected
+  identity
+- audit output records user, role, and groups

@@ -1,11 +1,15 @@
 const goalInput = document.querySelector("#goal");
+const userSelect = document.querySelector("#user-select");
 const runBtn = document.querySelector("#run-btn");
 const skill = document.querySelector("#skill");
+const role = document.querySelector("#role");
+const identityStatus = document.querySelector("#identity");
 const ollama = document.querySelector("#ollama");
 const cloudCalls = document.querySelector("#cloud-calls");
 const qdrant = document.querySelector("#qdrant");
 const alwaysOn = document.querySelector("#always-on");
 const contextList = document.querySelector("#context-list");
+const identityCard = document.querySelector("#identity-card");
 const vectorMemory = document.querySelector("#vector-memory");
 const pitchProof = document.querySelector("#pitch-proof");
 const graph = document.querySelector("#graph");
@@ -50,15 +54,34 @@ async function loadHealth() {
   cloudCalls.textContent = health.cloud_llm_calls;
   ollama.textContent = health.ollama.available ? "online" : "offline fallback";
   qdrant.textContent = health.qdrant.available ? "online" : "offline fallback";
+  identityStatus.textContent = health.identity.provider;
   alwaysOn.textContent = `${health.always_on.last_status} · ${health.always_on.runs}`;
+}
+
+async function loadUsers() {
+  const data = await getJson("/identity/users");
+  userSelect.innerHTML = data.users
+    .map(
+      (user) =>
+        `<option value="${escapeHtml(user.id)}" data-role="${escapeHtml(user.role)}">${escapeHtml(user.name)} · ${escapeHtml(user.role)}</option>`,
+    )
+    .join("");
+  userSelect.value = "morgan";
 }
 
 function render(result) {
   const packet = result.context_packet;
   skill.textContent = packet.skill_label;
+  role.textContent = packet.role;
   score.textContent = `${packet.readiness_score}%`;
   scoreBar.value = packet.readiness_score;
   confidence.textContent = packet.confidence;
+
+  identityCard.innerHTML = linesCard("identity adapter", [
+    `${packet.user.name} · ${packet.user.title}`,
+    `role: ${packet.role}`,
+    `groups: ${packet.groups.join(", ")}`,
+  ]);
 
   contextList.innerHTML = packet.allowed_context
     .map((item) => card(item.title, item.text, `<span class="tag">${escapeHtml(item.source)}</span>`))
@@ -93,6 +116,7 @@ function render(result) {
 
   auditPanel.innerHTML = [
     card("goal", result.audit.goal),
+    card("identity", `${result.audit.user.name} · ${result.audit.role}; groups: ${result.audit.groups.join(", ")}`),
     card("graph path", result.audit.graph_path_traversed.join(" -> ")),
     card("sources used", result.audit.sources_used.join(", ")),
     card("blocked context", result.audit.context_blocked.map((item) => `${item.id}: ${item.reasons.join("/")}`).join("; ")),
@@ -104,10 +128,12 @@ async function runAgent() {
   runBtn.disabled = true;
   runBtn.textContent = "running locally...";
   try {
+    const selectedUser = userSelect.value || "morgan";
+    const selectedRole = userSelect.selectedOptions[0]?.dataset.role || "grant_manager";
     const seed = await getJson("/demo/seed", { method: "POST" });
     const result = await getJson("/agent/run", {
       method: "POST",
-      body: JSON.stringify({ goal: goalInput.value, role: "grant_manager" }),
+      body: JSON.stringify({ goal: goalInput.value, role: selectedRole, user_id: selectedUser }),
     });
     const vector = await getJson("/tools/vector_search", {
       method: "POST",
@@ -144,7 +170,11 @@ document.querySelectorAll(".tab").forEach((tab) => {
 });
 
 runBtn.addEventListener("click", runAgent);
+userSelect.addEventListener("change", runAgent);
+loadUsers().then(runAgent).catch(() => {
+  userSelect.innerHTML = '<option value="morgan">Morgan · grant_manager</option>';
+  runAgent();
+});
 loadHealth().catch(() => {
   ollama.textContent = "unknown";
 });
-runAgent();

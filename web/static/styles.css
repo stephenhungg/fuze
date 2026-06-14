@@ -109,6 +109,15 @@ textarea {
   padding: 12px;
 }
 
+select {
+  width: 100%;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #111419;
+  color: var(--text);
+  padding: 10px 12px;
+}
+
 button {
   border: 1px solid var(--line);
   border-radius: 8px;

@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import agent, policy, retrieval, vector_memory
+from . import agent, identity, policy, retrieval, vector_memory
 from .db import DEMO_GOAL, store
 
 
@@ -63,6 +63,7 @@ if (WEB_DIR / "static").exists():
 class GoalRequest(BaseModel):
     goal: str = DEMO_GOAL
     role: str = "grant_manager"
+    user_id: str | None = "morgan"
 
 
 class PolicyRequest(BaseModel):
@@ -95,7 +96,7 @@ async def qdrant_status() -> dict[str, Any]:
 async def monitor_loop() -> None:
     while True:
         try:
-            result = agent.run_agent(goal=f"always-on monitor: {DEMO_GOAL}", role="grant_manager")
+            result = agent.run_agent(goal=f"always-on monitor: {DEMO_GOAL}", role="grant_manager", user_id="morgan")
             monitor_state.update(
                 {
                     "runs": monitor_state["runs"] + 1,
@@ -124,6 +125,7 @@ async def health() -> dict[str, Any]:
         "cloud_llm_calls": 0,
         "ollama": await ollama_status(),
         "qdrant": await qdrant_status(),
+        "identity": identity.identity_status(),
         "always_on": monitor_state,
     }
 
@@ -137,7 +139,7 @@ async def seed() -> dict[str, Any]:
 
 @app.post("/agent/run")
 def run_agent(request: GoalRequest) -> dict[str, Any]:
-    return agent.run_agent(goal=request.goal, role=request.role)
+    return agent.run_agent(goal=request.goal, role=request.role, user_id=request.user_id)
 
 
 @app.get("/demo/pitch")
@@ -148,6 +150,11 @@ def demo_pitch() -> dict[str, Any]:
 @app.get("/agent/status")
 def agent_status() -> dict[str, Any]:
     return {"always_on": monitor_state, "tasks": store.tasks, "audit_runs": store.audit_runs[-5:]}
+
+
+@app.get("/identity/users")
+def identity_users() -> dict[str, Any]:
+    return {"users": identity.list_users(), "role_map": identity.GROUP_ROLE_MAP}
 
 
 @app.get("/graph")
@@ -167,7 +174,7 @@ def audit() -> dict[str, Any]:
 
 @app.post("/tools/get_context")
 def get_context(request: GoalRequest) -> dict[str, Any]:
-    return retrieval.get_context(goal=request.goal, role=request.role, external=True)
+    return retrieval.get_context(goal=request.goal, role=request.role, user_id=request.user_id, external=True)
 
 
 @app.post("/tools/prepare_report")

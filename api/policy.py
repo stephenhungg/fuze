@@ -20,7 +20,7 @@ def is_blocked(chunk: dict[str, Any], role: str, external: bool) -> tuple[bool, 
         reasons.append(f"role `{role}` is not allowed")
     if external and not chunk.get("external_output_allowed", False):
         reasons.append("not allowed in external output")
-    if chunk.get("sensitivity") == "restricted":
+    if chunk.get("sensitivity") == "restricted" and role != "case_manager":
         reasons.append("restricted sensitivity")
     if external and contains_pii(chunk.get("text", "")):
         reasons.append("pii detected")

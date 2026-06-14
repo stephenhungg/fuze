@@ -40,6 +40,12 @@ def main() -> int:
     assert_true(health["ok"] is True, "api health ok")
     assert_true(health["cloud_llm_calls"] == 0, "cloud llm calls are zero")
     assert_true(health["always_on"]["enabled"] is True, "always-on monitor enabled")
+    assert_true(health["identity"]["provider"] == "demo-adapter", "identity adapter is active")
+
+    users = request("/identity/users")
+    roles = {user["id"]: user["role"] for user in users["users"]}
+    assert_true(roles["morgan"] == "grant_manager", "grant manager maps from group")
+    assert_true(roles["casey"] == "case_manager", "case manager maps from group")
 
     seed = request("/demo/seed", {})
     vector_seed = seed["vector_seed"]
@@ -55,6 +61,8 @@ def main() -> int:
     )
     packet = run["context_packet"]
     assert_true(packet["skill_label"] == "Nonprofit Grants", "nonprofit grants skill activated")
+    assert_true(packet["user"]["id"] == "morgan", "context packet records user identity")
+    assert_true(packet["role"] == "grant_manager", "context packet records role")
     assert_true(packet["readiness_score"] == 72, "readiness score is 72")
     assert_true(len(run["tasks"]) == 3, "three action tasks created")
     assert_true(len(packet["blocked_context"]) >= 1, "sensitive context is blocked")

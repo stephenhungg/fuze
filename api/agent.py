@@ -100,8 +100,8 @@ def prepare_report(context: dict[str, Any] | None = None) -> dict[str, Any]:
     }
 
 
-def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager") -> dict[str, Any]:
-    context = retrieval.get_context(goal=goal, role=role, external=True)
+def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str | None = None) -> dict[str, Any]:
+    context = retrieval.get_context(goal=goal, role=role, user_id=user_id, external=True)
     tasks = create_tasks()
     report = prepare_report(context)
     audit = {
@@ -109,6 +109,9 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager") -> dict[str, A
         "created_at": datetime.now(timezone.utc).isoformat(),
         "goal": goal,
         "skill_activated": context["skill_label"],
+        "user": context["user"],
+        "role": context["role"],
+        "groups": context["groups"],
         "graph_path_traversed": context["graph_path"],
         "sources_used": context["citations"],
         "context_allowed": [item["id"] for item in context["allowed_context"]],
@@ -125,6 +128,12 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager") -> dict[str, A
             "planning_model": "qwen3:14b",
             "embedding_model": "nomic-embed-text",
             "cloud_calls": 0,
+        },
+        "identity_runtime": {
+            "provider": "demo-adapter",
+            "source": "active directory / entra-style group mapping",
+            "role": context["role"],
+            "groups": context["groups"],
         },
     }
     store.add_audit(audit)
