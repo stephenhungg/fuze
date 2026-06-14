@@ -1,0 +1,7 @@
+user_id,name,email,title,department,groups,fuze_role,approval_scope
+morgan,Morgan Patel,morgan@harborlight.local,Grant Manager,development,cn=grant-team,grant_manager,draft grant reports
+alex,Alex Rivera,alex@harborlight.local,Executive Director,leadership,cn=executive,executive_director,external funder exports
+sarah,Sarah Kim,sarah@harborlight.local,Program Lead,youth programs,cn=programs,program_lead,program outcomes and story language
+casey,Casey Nguyen,casey@harborlight.local,Case Manager,family support,cn=case-management,case_manager,restricted case review
+jordan,Jordan Lee,jordan@harborlight.local,Volunteer Coordinator,operations,cn=volunteers,volunteer_coordinator,volunteer hours and attestations
+board-viewer,Board Viewer,board@harborlight.local,Board Viewer,board,cn=board,board_viewer,read board reports

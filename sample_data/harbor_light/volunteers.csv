@@ -1,0 +1,6 @@
+volunteer_id,name,role,may_hours,status,owner,notes
+vol-101,Jordan Lee,coordinator,,pending sign-off,Jordan Lee,owns final export and background check attestations
+vol-203,Avery Brooks,meal prep,28,confirmed,Jordan Lee,regular tuesday shift
+vol-204,Sam Rivera,delivery support,16,confirmed,Jordan Lee,driving record verified
+vol-205,Riley Chen,tutoring,22,confirmed,Jordan Lee,needs june availability follow-up
+vol-206,Taylor Morgan,front desk,18,draft,Jordan Lee,may hours entered but not reviewed

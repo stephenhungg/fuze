@@ -1,0 +1,7 @@
+month,program,metric,value,target,status,owner,citation
+2026-05,youth meals,meals_served,1284,1200,above target,Sarah Kim,program_metrics.csv#may-meals
+2026-05,youth meals,youth_attendance,412,390,above target,Sarah Kim,program_metrics.csv#may-attendance
+2026-05,youth meals,average_daily_attendance,19.6,18,above target,Sarah Kim,program_metrics.csv#may-ada
+2026-05,family support,family_check_ins,76,70,on track,Casey Nguyen,program_metrics.csv#may-family
+2026-05,volunteer operations,volunteer_hours,,240,missing owner sign-off,Jordan Lee,program_metrics.csv#may-volunteers
+2026-06,youth meals,projected_meals_served,1320,1250,forecast,Sarah Kim,program_metrics.csv#june-forecast

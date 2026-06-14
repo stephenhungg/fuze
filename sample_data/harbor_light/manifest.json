@@ -1,0 +1,152 @@
+{
+  "org_id": "harbor-light-nonprofit",
+  "org_name": "Harbor Light Community Services",
+  "generated_for": "fuze local-first nonprofit grant reporting demo",
+  "synthetic": true,
+  "connectors": [
+    {
+      "id": "connector-m365-sharepoint",
+      "label": "microsoft 365 sharepoint",
+      "source_root": "sample_data/harbor_light",
+      "change_detection": "graph delta query + change notifications"
+    },
+    {
+      "id": "connector-google-drive",
+      "label": "google drive",
+      "source_root": "sample_data/harbor_light",
+      "change_detection": "drive changes feed"
+    },
+    {
+      "id": "connector-crm-export",
+      "label": "donor crm csv export",
+      "source_root": "sample_data/harbor_light",
+      "change_detection": "local folder watcher"
+    },
+    {
+      "id": "connector-case-notes",
+      "label": "case management secure folder",
+      "source_root": "sample_data/harbor_light",
+      "change_detection": "manual approval import"
+    }
+  ],
+  "files": [
+    {
+      "path": "grant_requirements.txt",
+      "connector_id": "connector-m365-sharepoint",
+      "source_type": "grant_agreement",
+      "sensitivity": "internal",
+      "allowed_roles": ["grant_manager", "executive_director"],
+      "external_output_allowed": true
+    },
+    {
+      "path": "program_metrics.csv",
+      "connector_id": "connector-google-drive",
+      "source_type": "csv",
+      "sensitivity": "internal",
+      "allowed_roles": ["grant_manager", "program_lead", "executive_director"],
+      "external_output_allowed": true
+    },
+    {
+      "path": "volunteers.csv",
+      "connector_id": "connector-google-drive",
+      "source_type": "csv",
+      "sensitivity": "internal",
+      "allowed_roles": ["grant_manager", "program_lead", "volunteer_coordinator"],
+      "external_output_allowed": false
+    },
+    {
+      "path": "case_notes.txt",
+      "connector_id": "connector-case-notes",
+      "source_type": "case_note",
+      "sensitivity": "restricted",
+      "allowed_roles": ["case_manager"],
+      "external_output_allowed": false
+    },
+    {
+      "path": "approved_story_bank.md",
+      "connector_id": "connector-case-notes",
+      "source_type": "story_bank",
+      "sensitivity": "internal",
+      "allowed_roles": ["grant_manager", "program_lead", "executive_director"],
+      "external_output_allowed": true
+    },
+    {
+      "path": "board_minutes.txt",
+      "connector_id": "connector-m365-sharepoint",
+      "source_type": "board_minutes",
+      "sensitivity": "internal",
+      "allowed_roles": ["grant_manager", "executive_director", "board_viewer"],
+      "external_output_allowed": true
+    },
+    {
+      "path": "finance_export_may.csv",
+      "connector_id": "connector-m365-sharepoint",
+      "source_type": "finance_export",
+      "sensitivity": "internal",
+      "allowed_roles": ["grant_manager", "executive_director"],
+      "external_output_allowed": true
+    },
+    {
+      "path": "staff_directory.csv",
+      "connector_id": "connector-m365-sharepoint",
+      "source_type": "directory_export",
+      "sensitivity": "internal",
+      "allowed_roles": ["grant_manager", "program_lead", "executive_director"],
+      "external_output_allowed": false
+    },
+    {
+      "path": "story_consent_tracker.csv",
+      "connector_id": "connector-case-notes",
+      "source_type": "consent_tracker",
+      "sensitivity": "restricted",
+      "allowed_roles": ["grant_manager", "program_lead", "case_manager", "executive_director"],
+      "external_output_allowed": false
+    },
+    {
+      "path": "donor_crm_export.csv",
+      "connector_id": "connector-crm-export",
+      "source_type": "crm_export",
+      "sensitivity": "confidential",
+      "allowed_roles": ["grant_manager", "executive_director"],
+      "external_output_allowed": false
+    },
+    {
+      "path": "compliance_calendar.md",
+      "connector_id": "connector-google-drive",
+      "source_type": "calendar",
+      "sensitivity": "internal",
+      "allowed_roles": ["program_lead", "volunteer_coordinator", "executive_director"],
+      "external_output_allowed": false
+    },
+    {
+      "path": "board_risk_register.md",
+      "connector_id": "connector-m365-sharepoint",
+      "source_type": "risk_register",
+      "sensitivity": "internal",
+      "allowed_roles": ["grant_manager", "executive_director", "board_viewer"],
+      "external_output_allowed": false
+    },
+    {
+      "path": "sharepoint_delta_sample.json",
+      "connector_id": "connector-m365-sharepoint",
+      "source_type": "connector_delta",
+      "sensitivity": "internal",
+      "allowed_roles": ["grant_manager", "executive_director"],
+      "external_output_allowed": false
+    }
+  ],
+  "required_payload_fields": [
+    "org_id",
+    "source_id",
+    "source_type",
+    "title",
+    "section",
+    "chunk_index",
+    "allowed_roles",
+    "sensitivity",
+    "external_output_allowed",
+    "citations",
+    "document_hash",
+    "updated_at"
+  ]
+}

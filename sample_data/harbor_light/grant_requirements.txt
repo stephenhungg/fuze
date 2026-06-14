@@ -1,0 +1,26 @@
+anderson foundation grant agreement
+source: sharepoint/grants/anderson/grant_requirements.txt
+grant id: grant-anderson-2026
+amount: 125000 usd
+report due: 2026-06-20
+relationship owner: Morgan Patel
+
+reporting requirements
+- include total meals served for may 2026.
+- include youth attendance total for may 2026.
+- include may volunteer hours after final owner sign-off.
+- include budget variance explanation when food purchasing varies by more than 5 percent.
+- include one approved anonymized participant story.
+- do not include raw case notes, minor names, addresses, phone numbers, or case identifiers.
+
+approval requirements
+- executive director approval is required before external export.
+- program lead approval is required for participant story language.
+- grant manager may prepare a draft but cannot send without approval.
+
+accepted citations
+- program_metrics.csv#may
+- volunteers.csv#jordan
+- finance_export_may.csv#variance
+- approved_story_bank.md#story-2
+- board_minutes.txt#approval

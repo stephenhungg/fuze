@@ -1,0 +1,20 @@
+restricted case notes
+source: secure-case-folder/case_notes.txt
+access: case_manager only
+external output: forbidden
+
+case-1 raw note
+client maya, age 15, lives at 44 cedar ave.
+family reported housing instability and inconsistent food access in may.
+case manager notes include school schedule, family contact details, and service needs.
+
+policy label
+- restricted sensitivity
+- contains minor name
+- contains age
+- contains street address
+- raw note cannot be used in funder-facing material
+
+safe handling
+case manager may review internally.
+grant manager may only use approved anonymized story bank language.

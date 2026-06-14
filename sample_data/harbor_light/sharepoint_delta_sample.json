@@ -1,0 +1,27 @@
+{
+  "connector_id": "connector-m365-sharepoint",
+  "delta_token": "delta-token-demo-2026-06-14T18:20:00Z",
+  "changes": [
+    {
+      "id": "driveitem-grant-requirements",
+      "name": "grant_requirements.txt",
+      "change_type": "updated",
+      "last_modified": "2026-06-10T15:00:00Z",
+      "path": "/grants/anderson/grant_requirements.txt"
+    },
+    {
+      "id": "driveitem-board-minutes",
+      "name": "board_minutes.txt",
+      "change_type": "updated",
+      "last_modified": "2026-06-03T22:00:00Z",
+      "path": "/board/2026-06-board-minutes.txt"
+    },
+    {
+      "id": "driveitem-risk-register",
+      "name": "board_risk_register.md",
+      "change_type": "updated",
+      "last_modified": "2026-06-05T19:00:00Z",
+      "path": "/board/board_risk_register.md"
+    }
+  ]
+}

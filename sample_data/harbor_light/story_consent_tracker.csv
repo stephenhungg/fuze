@@ -1,0 +1,5 @@
+story_id,program,status,approved_for_external,review_owner,sensitivity,notes
+story-1,youth meals,approved,true,Sarah Kim,internal,aggregate use only
+story-2,youth meals,approved,true,Sarah Kim,internal,anonymized and board-approved
+story-3,family support,pending,false,Sarah Kim,restricted,program lead review required before any export
+raw-case-maya,family support,blocked,false,Casey Nguyen,restricted,contains minor name age and address

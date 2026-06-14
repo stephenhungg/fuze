@@ -1,0 +1,5 @@
+account,category,may_actual,may_budget,variance_pct,status,notes,citation
+5001,food purchasing,18420,17310,6.4,acceptable,attendance exceeded forecast and variance is within grant tolerance,finance_export_may.csv#variance
+5010,program supplies,4280,4500,-4.9,on track,lower supply use due to donated materials,finance_export_may.csv#supplies
+6010,transportation,2100,2400,-12.5,on track,two delivery routes consolidated,finance_export_may.csv#transport
+7005,volunteer training,980,1200,-18.3,watch,june background check training may increase spend,finance_export_may.csv#training

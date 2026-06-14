@@ -52,6 +52,12 @@ offline/
 docs/
 ```
 
+`sample_data/harbor_light` contains a synthetic nonprofit source corpus for
+future ingestion work: grant requirements, metrics exports, volunteer records,
+board minutes, finance exports, staff directory, consent tracker, case notes,
+approved stories, donor crm data, compliance calendar, risk register, and a
+sharepoint delta sample.
+
 ## planned endpoints
 
 - `GET /health`
