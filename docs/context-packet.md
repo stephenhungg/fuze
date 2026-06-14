@@ -1,9 +1,9 @@
-# context packet scaffold
+# context packet
 
 the context packet is the boundary between raw organizational memory and the
 agent/action layer.
 
-planned fields:
+fields:
 
 - `goal`
 - `org_id`
@@ -19,3 +19,5 @@ planned fields:
 - `policy_results`
 - `audit_ref`
 
+the implemented demo returns allowed context with citations and blocked context
+with policy reasons plus redacted previews.

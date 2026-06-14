@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>fuze</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="panel goal-panel">
+        <div class="brand">
+          <span class="mark">fz</span>
+          <div>
+            <h1>fuze</h1>
+            <p>federated understanding & zero-trust execution</p>
+          </div>
+        </div>
+
+        <label for="goal">goal</label>
+        <textarea id="goal">get us ready for the anderson foundation report</textarea>
+        <button id="run-btn" type="button">run local agent</button>
+
+        <div class="status-grid">
+          <div>
+            <span>mode</span>
+            <strong>local-first</strong>
+          </div>
+          <div>
+            <span>cloud llm calls</span>
+            <strong id="cloud-calls">0</strong>
+          </div>
+          <div>
+            <span>skill</span>
+            <strong id="skill">not run</strong>
+          </div>
+          <div>
+            <span>ollama</span>
+            <strong id="ollama">checking</strong>
+          </div>
+        </div>
+
+        <h2>context packet</h2>
+        <div id="context-list" class="stack"></div>
+      </section>
+
+      <section class="panel graph-panel">
+        <div class="panel-head">
+          <div>
+            <h2>memory traversal</h2>
+            <p>operational context, not raw file rummaging</p>
+          </div>
+          <span id="confidence" class="pill">idle</span>
+        </div>
+        <div id="graph" class="graph"></div>
+
+        <h2>blocked context</h2>
+        <div id="blocked" class="stack"></div>
+      </section>
+
+      <section class="panel output-panel">
+        <div class="readiness">
+          <div>
+            <span>readiness</span>
+            <strong id="score">--%</strong>
+          </div>
+          <progress id="score-bar" max="100" value="0"></progress>
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" data-tab="tasks" type="button">tasks</button>
+          <button class="tab" data-tab="drafts" type="button">drafts</button>
+          <button class="tab" data-tab="audit" type="button">audit</button>
+        </div>
+
+        <div id="tasks" class="tab-panel active"></div>
+        <div id="drafts" class="tab-panel"></div>
+        <div id="audit" class="tab-panel"></div>
+      </section>
+    </main>
+    <script src="/static/app.js"></script>
+  </body>
+</html>

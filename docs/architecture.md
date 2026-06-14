@@ -1,4 +1,4 @@
-# architecture scaffold
+# architecture
 
 ## layers
 
@@ -34,3 +34,23 @@ Anderson Foundation
 -> Missing Volunteer Hours
 -> Jordan
 ```
+
+## runtime
+
+- api/ui: `fastapi` served from `api/main.py`
+- local model status: `ollama` at `OLLAMA_HOST`, default `http://127.0.0.1:11434`
+- deterministic venue fallback: in-memory seed data in `api/db.py`
+- vector/runtime infra on gb10: qdrant docker container `fuze-qdrant`
+
+## implemented endpoints
+
+- `GET /health`
+- `POST /demo/seed`
+- `POST /agent/run`
+- `GET /graph`
+- `GET /tasks`
+- `GET /audit`
+- `POST /tools/get_context`
+- `POST /tools/prepare_report`
+- `POST /tools/policy_check`
+- `POST /tools/create_tasks`

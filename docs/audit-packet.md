@@ -1,8 +1,8 @@
-# audit packet scaffold
+# audit packet
 
-every run should produce an audit packet.
+every `/agent/run` produces an audit packet.
 
-planned fields:
+fields:
 
 - `goal`
 - `skill_activated`
@@ -14,3 +14,5 @@ planned fields:
 - `actions_created`
 - `approvals_required`
 - `model_runtime`
+
+the demo audit explicitly records `cloud_calls: 0`.

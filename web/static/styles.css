@@ -1,0 +1,293 @@
+:root {
+  color-scheme: dark;
+  --bg: #101216;
+  --panel: #181b20;
+  --panel-2: #20242b;
+  --line: #333943;
+  --text: #f3f5f7;
+  --muted: #a8b0bb;
+  --green: #58d68d;
+  --red: #ff7a7a;
+  --amber: #f4c95d;
+  --cyan: #65d8ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  font: 14px/1.45 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button,
+textarea {
+  font: inherit;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.92fr) minmax(360px, 1.2fr) minmax(340px, 1fr);
+  gap: 12px;
+  height: 100vh;
+  padding: 12px;
+}
+
+.panel {
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+  padding: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.mark {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: var(--green);
+  color: #08120d;
+  font-weight: 900;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: 28px;
+  line-height: 1;
+}
+
+h2 {
+  margin-top: 18px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  text-transform: uppercase;
+  color: var(--muted);
+  letter-spacing: 0;
+}
+
+p,
+label,
+.card small,
+.status-grid span,
+.readiness span {
+  color: var(--muted);
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+
+textarea {
+  width: 100%;
+  min-height: 104px;
+  resize: vertical;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #111419;
+  color: var(--text);
+  padding: 12px;
+}
+
+button {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+#run-btn {
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px 12px;
+  background: var(--green);
+  color: #07120c;
+  font-weight: 800;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.status-grid div,
+.readiness,
+.card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+}
+
+.status-grid div {
+  padding: 10px;
+}
+
+.status-grid span,
+.readiness span {
+  display: block;
+  font-size: 12px;
+}
+
+.stack {
+  display: grid;
+  gap: 8px;
+}
+
+.card {
+  padding: 10px;
+}
+
+.card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.panel-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pill {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 5px 9px;
+  color: var(--cyan);
+  background: #101820;
+  white-space: nowrap;
+}
+
+.graph {
+  display: grid;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.node {
+  position: relative;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #151a21;
+  padding: 12px 12px 12px 42px;
+}
+
+.node::before {
+  content: attr(data-step);
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--cyan);
+  color: #061016;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.node:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 21px;
+  bottom: -11px;
+  width: 2px;
+  height: 10px;
+  background: var(--line);
+}
+
+.blocked {
+  border-color: #6c3434;
+}
+
+.blocked strong {
+  color: var(--red);
+}
+
+.readiness {
+  padding: 14px;
+}
+
+.readiness strong {
+  display: block;
+  font-size: 38px;
+  line-height: 1;
+}
+
+progress {
+  width: 100%;
+  height: 12px;
+  margin-top: 10px;
+  accent-color: var(--green);
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 14px 0;
+}
+
+.tab {
+  padding: 9px;
+}
+
+.tab.active {
+  border-color: var(--green);
+  color: var(--green);
+}
+
+.tab-panel {
+  display: none;
+}
+
+.tab-panel.active {
+  display: grid;
+  gap: 8px;
+}
+
+.tag {
+  display: inline-block;
+  margin-top: 6px;
+  border-radius: 999px;
+  padding: 3px 7px;
+  background: #12161c;
+  color: var(--amber);
+  font-size: 12px;
+}
+
+@media (max-width: 980px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .panel {
+    overflow: visible;
+  }
+}

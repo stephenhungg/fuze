@@ -60,7 +60,26 @@ docs/
 - `POST /tools/policy_check`
 - `POST /tools/create_tasks`
 
-## scaffold status
+## run locally
 
-this repo is intentionally scaffold-only right now. the files define boundaries,
-contracts, and demo fixtures, but do not implement the app logic yet.
+```bash
+python3 -m pip install -r requirements.txt
+./offline/run_local.sh
+```
+
+open `http://localhost:8000`.
+
+## demo status
+
+the repo now implements a deterministic local-first vertical slice for the
+anderson foundation report workflow:
+
+- seeded nonprofit grant memory
+- context packet retrieval
+- policy-filtered allowed and blocked context
+- readiness score, missing information, tasks, report outline, follow-up drafts
+- audit packet with graph path, sources, policy checks, approvals, and model runtime
+- zero-build browser ui served by the backend
+
+ollama/qdrant are runtime infrastructure on the gb10. the app does not make
+cloud llm calls.
