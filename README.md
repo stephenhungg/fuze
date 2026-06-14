@@ -82,6 +82,7 @@ anderson foundation report workflow:
 - policy-filtered allowed and blocked context
 - readiness score, missing information, tasks, report outline, follow-up drafts
 - audit packet with graph path, sources, policy checks, approvals, and model runtime
+- always-on local monitor loop that refreshes readiness/audit state while the service runs
 - zero-build browser ui served by the backend
 
 ollama/qdrant are runtime infrastructure on the gb10. the app does not make

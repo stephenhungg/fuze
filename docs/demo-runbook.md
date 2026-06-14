@@ -48,6 +48,7 @@ curl -fsS -X POST http://127.0.0.1:8000/agent/run \
 look for:
 
 - `cloud_llm_calls: 0`
+- `always_on.enabled: true`
 - `skill_label: Nonprofit Grants`
 - `readiness_score: 72`
 - three tasks

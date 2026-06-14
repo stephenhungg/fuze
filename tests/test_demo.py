@@ -33,6 +33,17 @@ def test_agent_run_produces_hackathon_demo_packet():
     assert data["audit"]["model_runtime"]["cloud_calls"] == 0
 
 
+def test_health_reports_local_runtime_surfaces():
+    response = client.get("/health")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["cloud_llm_calls"] == 0
+    assert "ollama" in data
+    assert "qdrant" in data
+    assert data["always_on"]["enabled"] is True
+
+
 def test_policy_blocks_raw_external_pii():
     response = client.post(
         "/tools/policy_check",

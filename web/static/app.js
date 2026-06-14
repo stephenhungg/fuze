@@ -3,6 +3,8 @@ const runBtn = document.querySelector("#run-btn");
 const skill = document.querySelector("#skill");
 const ollama = document.querySelector("#ollama");
 const cloudCalls = document.querySelector("#cloud-calls");
+const qdrant = document.querySelector("#qdrant");
+const alwaysOn = document.querySelector("#always-on");
 const contextList = document.querySelector("#context-list");
 const graph = document.querySelector("#graph");
 const blocked = document.querySelector("#blocked");
@@ -39,6 +41,8 @@ async function loadHealth() {
   const health = await getJson("/health");
   cloudCalls.textContent = health.cloud_llm_calls;
   ollama.textContent = health.ollama.available ? "online" : "offline fallback";
+  qdrant.textContent = health.qdrant.available ? "online" : "offline fallback";
+  alwaysOn.textContent = `${health.always_on.last_status} · ${health.always_on.runs}`;
 }
 
 function render(result) {
