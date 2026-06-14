@@ -28,6 +28,7 @@ def test_agent_run_produces_hackathon_demo_packet():
         "Jordan",
     ]
     assert len(data["tasks"]) == 3
+    assert len(data["approvals"]) == 2
     assert "may volunteer hours" in packet["missing_info"][0]["label"]
     assert packet["blocked_context"]
     assert data["audit"]["model_runtime"]["cloud_calls"] == 0
@@ -157,3 +158,34 @@ def test_agent_mesh_status_and_events():
     assert "grant-readiness-agent" in agent_ids
     assert data["events"]
     assert data["transport"] == "local in-process a2a-style messages"
+
+
+def test_approval_queue_created_and_decision_is_auditable():
+    client.post("/demo/seed")
+    run = client.post(
+        "/agent/run",
+        json={"goal": "get us ready for the anderson foundation report", "user_id": "morgan", "role": "grant_manager"},
+    )
+
+    assert run.status_code == 200
+    assert [approval["status"] for approval in run.json()["approvals"]] == ["pending", "pending"]
+
+    queue = client.get("/approvals")
+    assert queue.status_code == 200
+    approvals = {approval["id"]: approval for approval in queue.json()["approvals"]}
+    assert approvals["approval-external-report-export"]["owner_role"] == "executive_director"
+    assert approvals["approval-third-anonymized-story"]["risk"] == "sensitive_story"
+
+    decision = client.post(
+        "/approvals/approval-external-report-export/decision",
+        json={"status": "approved", "actor": "alex", "note": "reviewed for venue demo"},
+    )
+
+    assert decision.status_code == 200
+    approval = decision.json()["approval"]
+    assert approval["status"] == "approved"
+    assert approval["decided_by"] == "alex"
+    assert approval["decision_note"] == "reviewed for venue demo"
+
+    mesh = client.get("/agents/status").json()
+    assert any(event["type"] == "approval_decision" for event in mesh["events"])

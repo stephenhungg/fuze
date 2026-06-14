@@ -21,6 +21,7 @@ const scoreBar = document.querySelector("#score-bar");
 const confidence = document.querySelector("#confidence");
 const tasksPanel = document.querySelector("#tasks");
 const draftsPanel = document.querySelector("#drafts");
+const approvalsPanel = document.querySelector("#approvals");
 const auditPanel = document.querySelector("#audit");
 
 function card(title, body, extra = "") {
@@ -116,6 +117,8 @@ function render(result) {
     ),
   ].join("");
 
+  renderApprovals(result.approvals);
+
   auditPanel.innerHTML = [
     card("goal", result.audit.goal),
     card("identity", `${result.audit.user.name} · ${result.audit.role}; groups: ${result.audit.groups.join(", ")}`),
@@ -126,6 +129,34 @@ function render(result) {
   ].join("");
 }
 
+function renderApprovals(approvals) {
+  if (!approvals.length) {
+    approvalsPanel.innerHTML = card("no approval gates", "nothing is waiting on a human right now.");
+    return;
+  }
+
+  approvalsPanel.innerHTML = approvals
+    .map((approval) => {
+      const closed = approval.status !== "pending";
+      const tagClass = closed ? approval.status : "";
+      const decision = closed
+        ? `<span class="tag ${escapeHtml(tagClass)}">${escapeHtml(approval.status)} by ${escapeHtml(approval.decided_by)}</span>`
+        : `<span class="tag">pending · ${escapeHtml(approval.owner_role)}</span>`;
+      const actions = closed
+        ? ""
+        : `<div class="approval-actions">
+            <button type="button" data-approval="${escapeHtml(approval.id)}" data-decision="approved">approve</button>
+            <button type="button" data-approval="${escapeHtml(approval.id)}" data-decision="rejected">reject</button>
+          </div>`;
+      return card(
+        approval.title,
+        `${approval.reason}\nsource: ${approval.source}`,
+        `${decision}${actions}`,
+      );
+    })
+    .join("");
+}
+
 function renderAgents(mesh) {
   agentMesh.innerHTML = mesh.agents
     .map((agent) => linesCard(agent.label, [`${agent.kind} · ${agent.status}`, agent.description]))
@@ -134,6 +165,26 @@ function renderAgents(mesh) {
     .slice(0, 8)
     .map((event) => card(`${event.agent_id} · ${event.type}`, event.message, `<span class="tag">${escapeHtml(event.created_at)}</span>`))
     .join("");
+}
+
+async function refreshApprovals() {
+  const data = await getJson("/approvals");
+  renderApprovals(data.approvals);
+}
+
+async function decideApproval(id, status, button) {
+  button.disabled = true;
+  await getJson(`/approvals/${encodeURIComponent(id)}/decision`, {
+    method: "POST",
+    body: JSON.stringify({
+      status,
+      actor: userSelect.value || "morgan",
+      note: "demo approval decision from dashboard",
+    }),
+  });
+  await refreshApprovals();
+  const mesh = await getJson("/agents/status");
+  renderAgents(mesh);
 }
 
 async function runAgent() {
@@ -185,6 +236,13 @@ document.querySelectorAll(".tab").forEach((tab) => {
 
 runBtn.addEventListener("click", runAgent);
 userSelect.addEventListener("change", runAgent);
+approvalsPanel.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-approval][data-decision]");
+  if (!button) return;
+  decideApproval(button.dataset.approval, button.dataset.decision, button).catch(() => {
+    button.disabled = false;
+  });
+});
 loadUsers().then(runAgent).catch(() => {
   userSelect.innerHTML = '<option value="morgan">Morgan · grant_manager</option>';
   runAgent();

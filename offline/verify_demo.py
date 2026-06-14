@@ -65,9 +65,15 @@ def main() -> int:
     assert_true(packet["role"] == "grant_manager", "context packet records role")
     assert_true(packet["readiness_score"] == 72, "readiness score is 72")
     assert_true(len(run["tasks"]) == 3, "three action tasks created")
+    assert_true(len(run["approvals"]) == 2, "two approval gates created")
     assert_true(len(packet["blocked_context"]) >= 1, "sensitive context is blocked")
     assert_true(run["audit"]["model_runtime"]["cloud_calls"] == 0, "audit records zero cloud calls")
     assert_true("Jordan" in packet["graph_path"], "graph path reaches Jordan")
+
+    approvals = request("/approvals")
+    approval_ids = {approval["id"] for approval in approvals["approvals"]}
+    assert_true("approval-external-report-export" in approval_ids, "external report approval gate is queued")
+    assert_true("approval-third-anonymized-story" in approval_ids, "story approval gate is queued")
 
     search = request(
         "/tools/vector_search",

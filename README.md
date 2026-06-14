@@ -89,6 +89,7 @@ anderson foundation report workflow:
 - context packet retrieval
 - policy-filtered allowed and blocked context
 - readiness score, missing information, tasks, report outline, follow-up drafts
+- approval queue with human decisions for external export and sensitive story use
 - audit packet with graph path, sources, policy checks, approvals, and model runtime
 - always-on local monitor loop that refreshes readiness/audit state while the service runs
 - zero-build browser ui served by the backend

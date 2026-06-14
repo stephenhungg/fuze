@@ -87,6 +87,7 @@ grant readiness agent
 -> policy agent filters context for the current role/output
 -> grant agent drafts tasks and report sections
 -> approval agent gates external export
+-> human approver accepts/rejects queued approval items
 -> audit agent records the run
 -> dashboard streams progress
 ```
@@ -166,7 +167,7 @@ implemented now:
 - dashboard identity switcher for role-aware context packets
 - lightweight local agent mesh status and event stream
 - policy-filtered context packet
-- tasks, drafts, approval packet, audit trail
+- tasks, drafts, approval queue, approval decisions, audit trail
 - always-on monitor
 - pitch packet and verifier
 
@@ -179,4 +180,4 @@ product-next:
 - event bus for agent-to-agent messages
 - long-running index/policy/workflow/audit agents
 - dashboard stream timeline
-- role switcher and approval queue ui
+- persistent approval policies with notification routing

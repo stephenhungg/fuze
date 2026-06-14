@@ -147,6 +147,7 @@ class DemoStore:
     def seed(self) -> dict[str, Any]:
         self.data = deepcopy(SEED_DATA)
         self.tasks: list[dict[str, Any]] = []
+        self.approvals: list[dict[str, Any]] = []
         self.audit_runs: list[dict[str, Any]] = []
         self.last_context: dict[str, Any] | None = None
         return self.snapshot()
@@ -159,6 +160,7 @@ class DemoStore:
             "edges": deepcopy(self.data["edges"]),
             "chunks": deepcopy(self.data["chunks"]),
             "tasks": deepcopy(self.tasks),
+            "approvals": deepcopy(self.approvals),
             "audit_runs": deepcopy(self.audit_runs),
         }
 
@@ -175,6 +177,41 @@ class DemoStore:
             if task["id"] not in existing:
                 self.tasks.append({**deepcopy(task), "created_at": now})
         return deepcopy(self.tasks)
+
+    def add_approvals(self, approvals: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        now = datetime.now(timezone.utc).isoformat()
+        existing = {approval["id"] for approval in self.approvals}
+        for approval in approvals:
+            if approval["id"] not in existing:
+                self.approvals.append(
+                    {
+                        **deepcopy(approval),
+                        "status": approval.get("status", "pending"),
+                        "created_at": now,
+                        "decided_at": None,
+                        "decided_by": None,
+                        "decision_note": None,
+                    }
+                )
+        return deepcopy(self.approvals)
+
+    def decide_approval(self, approval_id: str, status: str, actor: str, note: str = "") -> dict[str, Any] | None:
+        if status not in {"approved", "rejected"}:
+            raise ValueError("approval status must be approved or rejected")
+
+        now = datetime.now(timezone.utc).isoformat()
+        for approval in self.approvals:
+            if approval["id"] == approval_id:
+                approval.update(
+                    {
+                        "status": status,
+                        "decided_at": now,
+                        "decided_by": actor,
+                        "decision_note": note,
+                    }
+                )
+                return deepcopy(approval)
+        return None
 
     def add_audit(self, audit: dict[str, Any]) -> dict[str, Any]:
         self.audit_runs.append(deepcopy(audit))

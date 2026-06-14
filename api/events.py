@@ -116,12 +116,31 @@ def record_run(result: dict[str, Any], trigger: str) -> None:
     emit(
         "approval-agent",
         "approval",
-        f"{len(audit['approvals_required'])} approval gate(s) required",
-        {"approvals": audit["approvals_required"]},
+        f"{len(result['approvals'])} approval gate(s) queued",
+        {"approval_ids": [approval["id"] for approval in result["approvals"]]},
     )
     emit(
         "audit-agent",
         "audit",
         f"recorded {audit['id']} with cloud calls {audit['model_runtime']['cloud_calls']}",
         {"audit_id": audit["id"]},
+    )
+
+
+def record_approval_decision(approval: dict[str, Any]) -> None:
+    emit(
+        "approval-agent",
+        "approval_decision",
+        f"{approval['title']} {approval['status']} by {approval['decided_by']}",
+        {
+            "approval_id": approval["id"],
+            "status": approval["status"],
+            "decided_by": approval["decided_by"],
+        },
+    )
+    emit(
+        "audit-agent",
+        "audit",
+        f"recorded approval decision for {approval['id']}",
+        {"approval_id": approval["id"], "status": approval["status"]},
     )

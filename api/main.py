@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any, AsyncIterator
 
 import httpx
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -75,6 +75,12 @@ class PolicyRequest(BaseModel):
 class VectorSearchRequest(BaseModel):
     query: str = DEMO_GOAL
     limit: int = 5
+
+
+class ApprovalDecisionRequest(BaseModel):
+    status: str
+    actor: str = "alex"
+    note: str = ""
 
 
 async def ollama_status() -> dict[str, Any]:
@@ -183,6 +189,28 @@ def graph() -> dict[str, Any]:
 @app.get("/tasks")
 def tasks() -> dict[str, Any]:
     return {"tasks": store.tasks}
+
+
+@app.get("/approvals")
+def approvals() -> dict[str, Any]:
+    return {"approvals": store.approvals}
+
+
+@app.post("/approvals/{approval_id}/decision")
+def decide_approval(approval_id: str, request: ApprovalDecisionRequest) -> dict[str, Any]:
+    try:
+        approval = store.decide_approval(
+            approval_id=approval_id,
+            status=request.status,
+            actor=request.actor,
+            note=request.note,
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if approval is None:
+        raise HTTPException(status_code=404, detail="approval not found")
+    events.record_approval_decision(approval)
+    return {"approval": approval}
 
 
 @app.get("/audit")

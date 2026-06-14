@@ -100,10 +100,37 @@ def prepare_report(context: dict[str, Any] | None = None) -> dict[str, Any]:
     }
 
 
+def create_approvals(context: dict[str, Any], report: dict[str, Any]) -> list[dict[str, Any]]:
+    approvals = [
+        {
+            "id": "approval-external-report-export",
+            "title": "approve external Anderson report export",
+            "owner_role": "executive_director",
+            "requested_by": context["user"]["id"],
+            "risk": "external_output",
+            "reason": "external funder delivery must be reviewed before any send/export action.",
+            "source": "grant_requirements.txt#reporting",
+            "required_for": report["approvals_required"][0],
+        },
+        {
+            "id": "approval-third-anonymized-story",
+            "title": "approve anonymized participant story",
+            "owner_role": "program_lead",
+            "requested_by": context["user"]["id"],
+            "risk": "sensitive_story",
+            "reason": "raw case notes are blocked; only a reviewed anonymized story can leave the local boundary.",
+            "source": "case_notes.txt#maya",
+            "required_for": report["approvals_required"][1],
+        },
+    ]
+    return store.add_approvals(approvals)
+
+
 def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str | None = None) -> dict[str, Any]:
     context = retrieval.get_context(goal=goal, role=role, user_id=user_id, external=True)
     tasks = create_tasks()
     report = prepare_report(context)
+    approvals = create_approvals(context, report)
     audit = {
         "id": f"audit-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -122,6 +149,7 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str |
         "policy_checks": report["policy_result"]["checks"],
         "actions_created": [task["id"] for task in tasks],
         "approvals_required": report["approvals_required"],
+        "approval_ids": [approval["id"] for approval in approvals],
         "model_runtime": {
             "provider": "local ollama",
             "routing_model": "qwen3:8b",
@@ -142,6 +170,7 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str |
         "goal": goal,
         "context_packet": context,
         "tasks": tasks,
+        "approvals": approvals,
         "drafts": report,
         "audit": audit,
     }
