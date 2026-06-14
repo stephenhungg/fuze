@@ -51,9 +51,16 @@ def main() -> int:
     vector_seed = seed["vector_seed"]
     assert_true(seed["status"] == "seeded", "demo seed endpoint works")
     assert_true(vector_seed["collection"] == "fuze_context", "qdrant collection is fuze_context")
+
+    ingestion = request("/ingestion/run", {})
+    assert_true(ingestion["files_seen"] == 13, "sample ingestion sees thirteen files")
+    assert_true(ingestion["chunks_created"] > ingestion["files_seen"], "sample ingestion creates document chunks")
+    assert_true(ingestion["memory_chunks"] == ingestion["chunks_created"], "ingested chunks become memory chunks")
+    assert_true(ingestion["pii_chunks"] >= 2, "sample ingestion flags pii chunks")
+    assert_true("case_notes.txt" in ingestion["restricted_files"], "sample ingestion tracks restricted case notes")
     if health["qdrant"]["available"]:
-        assert_true(vector_seed["available"] is True, "qdrant seed is available")
-        assert_true(vector_seed["points"] >= 13, "qdrant has comprehensive demo memory points")
+        assert_true(ingestion["vector_seed"]["available"] is True, "qdrant seed is available")
+        assert_true(ingestion["vector_seed"]["points"] == ingestion["chunks_created"], "qdrant uses ingested chunks")
 
     run = request(
         "/agent/run",
@@ -69,6 +76,10 @@ def main() -> int:
     assert_true(len(packet["staff_profiles"]) == 5, "staff profiles are present")
     assert_true(len(packet["funders"]) == 3, "funder profiles are present")
     assert_true(len(packet["metrics"]) == 4, "operating metrics are present")
+    assert_true(
+        any(item["metadata"].get("derived_from") == "sample_data/harbor_light" for item in packet["allowed_context"]),
+        "context packet uses ingested source chunks",
+    )
     assert_true(len(run["tasks"]) == 3, "three action tasks created")
     assert_true(len(run["approvals"]) == 2, "two approval gates created")
     assert_true(len(packet["blocked_context"]) >= 1, "sensitive context is blocked")
@@ -105,12 +116,6 @@ def main() -> int:
     assert_true("identity" in step_ids, "onboarding covers identity connection")
     assert_true("connect-docs" in step_ids, "onboarding covers document ingestion setup")
     assert_true("activate-agents" in step_ids, "onboarding covers agent activation")
-
-    ingestion = request("/ingestion/run", {})
-    assert_true(ingestion["files_seen"] == 13, "sample ingestion sees thirteen files")
-    assert_true(ingestion["chunks_created"] > ingestion["files_seen"], "sample ingestion creates document chunks")
-    assert_true(ingestion["pii_chunks"] >= 2, "sample ingestion flags pii chunks")
-    assert_true("case_notes.txt" in ingestion["restricted_files"], "sample ingestion tracks restricted case notes")
 
     pitch = request("/demo/pitch")
     assert_true("local_first_always_on" in pitch["rubric_mapping"], "pitch maps local-first rubric")

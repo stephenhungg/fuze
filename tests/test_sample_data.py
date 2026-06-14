@@ -70,6 +70,7 @@ def test_sample_ingestion_partitions_files_with_policy_metadata():
     assert all("document_hash" in chunk for chunk in result["chunks"])
     assert any(chunk["source"] == "program_metrics.csv" for chunk in result["chunks"])
     assert any(chunk["sensitivity"] == "restricted" for chunk in result["chunks"])
+    assert all(chunk["title"] for chunk in result["chunks"])
 
 
 def test_ingestion_api_emits_index_agent_event():
@@ -79,6 +80,8 @@ def test_ingestion_api_emits_index_agent_event():
     data = response.json()
     assert data["files_seen"] == 13
     assert data["chunks_created"] > 13
+    assert data["memory_chunks"] == data["chunks_created"]
+    assert data["vector_seed"]["collection"] == "fuze_context"
     assert data["pii_chunks"] >= 2
 
     mesh = client.get("/agents/status").json()

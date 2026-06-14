@@ -216,8 +216,13 @@ def ingestion_status() -> dict[str, Any]:
 
 
 @app.post("/ingestion/run")
-def ingestion_run() -> dict[str, Any]:
+async def ingestion_run() -> dict[str, Any]:
     result = ingest.ingest_sample_corpus()
+    memory_chunks = ingest.chunks_for_memory(result)
+    store.replace_chunks(memory_chunks)
+    vector_seed = await vector_memory.seed()
+    result["memory_chunks"] = len(memory_chunks)
+    result["vector_seed"] = vector_seed
     events.record_ingestion(result)
     return result
 

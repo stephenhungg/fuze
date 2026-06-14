@@ -8,6 +8,8 @@ client = TestClient(app)
 
 def test_agent_run_produces_hackathon_demo_packet():
     client.post("/demo/seed")
+    ingestion = client.post("/ingestion/run")
+    assert ingestion.json()["memory_chunks"] == ingestion.json()["chunks_created"]
     response = client.post(
         "/agent/run",
         json={"goal": "get us ready for the anderson foundation report", "role": "grant_manager"},
@@ -36,6 +38,8 @@ def test_agent_run_produces_hackathon_demo_packet():
     assert len(packet["programs"]) == 3
     assert len(packet["metrics"]) == 4
     assert "may volunteer hours" in packet["missing_info"][0]["label"]
+    assert any(item["metadata"].get("derived_from") == "sample_data/harbor_light" for item in packet["allowed_context"])
+    assert any(item["source"] == "case_notes.txt" for item in packet["blocked_context"])
     assert packet["blocked_context"]
     assert data["audit"]["model_runtime"]["cloud_calls"] == 0
 
@@ -116,6 +120,8 @@ def test_identity_users_expose_group_role_mapping():
 
 
 def test_context_packet_records_identity_and_role():
+    client.post("/demo/seed")
+    client.post("/ingestion/run")
     response = client.post(
         "/tools/get_context",
         json={"goal": "get us ready for the anderson foundation report", "user_id": "morgan", "role": "grant_manager"},
@@ -128,10 +134,12 @@ def test_context_packet_records_identity_and_role():
     assert data["groups"] == ["cn=grant-team"]
     assert any(connector["id"] == "connector-m365-sharepoint" for connector in data["connectors"])
     assert any(metric["id"] == "metric-food-cost-variance" for metric in data["metrics"])
-    assert any(item["id"] == "case-1" for item in data["blocked_context"])
+    assert any(item["source"] == "case_notes.txt" for item in data["blocked_context"])
 
 
 def test_case_manager_can_use_restricted_context_internally():
+    client.post("/demo/seed")
+    client.post("/ingestion/run")
     response = client.post(
         "/tools/get_context",
         json={"goal": "review case note internally", "user_id": "casey", "role": "case_manager"},
@@ -139,8 +147,8 @@ def test_case_manager_can_use_restricted_context_internally():
 
     assert response.status_code == 200
     data = response.json()
-    blocked_ids = {item["id"] for item in data["blocked_context"]}
-    assert "case-1" in blocked_ids
+    blocked_sources = {item["source"] for item in data["blocked_context"]}
+    assert "case_notes.txt" in blocked_sources
 
     from api import retrieval
 
@@ -150,8 +158,8 @@ def test_case_manager_can_use_restricted_context_internally():
         role="case_manager",
         external=False,
     )
-    allowed_ids = {item["id"] for item in internal["allowed_context"]}
-    assert "case-1" in allowed_ids
+    allowed_sources = {item["source"] for item in internal["allowed_context"]}
+    assert "case_notes.txt" in allowed_sources
 
 
 def test_agent_mesh_status_and_events():

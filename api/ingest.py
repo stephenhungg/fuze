@@ -90,9 +90,11 @@ def ingest_sample_corpus() -> dict[str, Any]:
         file_hash = document_hash(raw_text)
         for index, text in enumerate(partition_file(path), start=1):
             chunk_id = f"{Path(entry['path']).stem}-{index}"
+            title = f"{entry['source_type'].replace('_', ' ')} chunk {index}"
             chunks.append(
                 {
                     "id": chunk_id,
+                    "title": title,
                     "source": entry["path"],
                     "source_type": entry["source_type"],
                     "connector_id": entry["connector_id"],
@@ -131,3 +133,29 @@ def ingest_sample_corpus() -> dict[str, Any]:
         "connector_counts": connector_counts,
         "chunks": chunks,
     }
+
+
+def chunks_for_memory(result: dict[str, Any]) -> list[dict[str, Any]]:
+    memory_chunks = []
+    for chunk in result["chunks"]:
+        memory_chunks.append(
+            {
+                "id": chunk["id"],
+                "title": chunk["title"],
+                "source": chunk["source"],
+                "text": chunk["text"],
+                "allowed_roles": chunk["allowed_roles"],
+                "external_output_allowed": chunk["external_output_allowed"],
+                "sensitivity": chunk["sensitivity"],
+                "citations": chunk["citations"],
+                "metadata": {
+                    "source_type": chunk["source_type"],
+                    "connector_id": chunk["connector_id"],
+                    "document_hash": chunk["document_hash"],
+                    "chunk_index": chunk["chunk_index"],
+                    "pii_detected": chunk["pii_detected"],
+                    "derived_from": "sample_data/harbor_light",
+                },
+            }
+        )
+    return memory_chunks

@@ -566,6 +566,10 @@ class DemoStore:
     def chunks(self) -> list[dict[str, Any]]:
         return deepcopy(self.data["chunks"])
 
+    def replace_chunks(self, chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        self.data["chunks"] = deepcopy(chunks)
+        return self.chunks()
+
     def add_tasks(self, tasks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         now = datetime.now(timezone.utc).isoformat()
         existing = {task["id"] for task in self.tasks}
