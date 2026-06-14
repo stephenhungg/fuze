@@ -104,6 +104,12 @@ def test_context_query_returns_local_context_core_answer():
     assert data["runtime"]["no_cloud_llm_calls"] is True
     assert data["vector_hits"]["collection"] == "fuze_context"
     assert data["vector_hits"]["hits"]
+    assert data["hybrid_retrieval"]["rank_fusion"]["algorithm"] == "reciprocal_rank_fusion"
+    assert data["hybrid_retrieval"]["rank_fusion"]["rankers"] == ["dense", "lexical", "graph"]
+    assert "policy_aware_rerank" in data["hybrid_retrieval"]["query_plan"]["retrieval_stages"]
+    assert data["hybrid_retrieval"]["reranked_hits"]
+    assert all(not hit["features"]["blocked_by_policy"] for hit in data["hybrid_retrieval"]["reranked_hits"])
+    assert data["hybrid_retrieval"]["packing"]["policy_filtered_before_prompt"] is True
     assert data["graph_traversal"]["ephemeral_agent"] == "context-graph-walker"
     assert data["graph_traversal"]["nodes"]
     assert data["selected_context"]

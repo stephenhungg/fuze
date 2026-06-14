@@ -231,12 +231,16 @@ function renderIngestion(result) {
 function renderContextCore(result) {
   const sources = result.selected_context.map((item) => item.source);
   const path = result.graph_traversal.path.slice(0, 6).join(" -> ");
+  const fusion = result.hybrid_retrieval.rank_fusion;
+  const stages = result.hybrid_retrieval.query_plan.retrieval_stages.slice(0, 4).join(" -> ");
   contextCore.innerHTML = [
     linesCard(
       result.server.name,
       [
         `${result.server.style} · cloud calls ${result.server.cloud_llm_calls}`,
-        `${result.vector_hits.hits.length} vector hit(s) · ${result.graph_traversal.nodes.length} graph node(s)`,
+        `${fusion.algorithm} · ${fusion.rankers.join("+")}`,
+        `${result.hybrid_retrieval.reranked_hits.length} reranked hit(s) · ${result.graph_traversal.nodes.length} graph node(s)`,
+        stages,
         path,
       ],
       `<span class="tag">${escapeHtml(sources.join(", ") || "policy-filtered")}</span>`,

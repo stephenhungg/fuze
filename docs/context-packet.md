@@ -63,7 +63,9 @@ the request carries `question`, `user_id`, `role`, `external`, and `limit`.
 the response contains:
 
 - `server`: local context-core identity and zero cloud calls
-- `vector_hits`: qdrant hits or deterministic lexical fallback
+- `vector_hits`: dense qdrant hits or deterministic fallback
+- `hybrid_retrieval`: query plan, lexical hits, graph hits, rrf fusion, reranked
+  hits, and source-diverse packing
 - `graph_traversal`: ephemeral graph-walker seeds, nodes, edges, and path
 - `context_packet`: the role-aware packet used by agents
 - `selected_context`: the allowed evidence selected for the current question
@@ -71,7 +73,10 @@ the response contains:
 - `runtime`: retrieval stack proof for audit and demo
 
 this is the “ask the organization” layer. agents query it for context; they do
-not each own their own index, graph traversal, or policy filters.
+not each own their own index, graph traversal, or policy filters. the demo path
+is intentionally not naive top-k rag: dense retrieval, lexical retrieval, and
+graph expansion are fused with reciprocal rank fusion, then reranked with policy
+and source diversity before prompt assembly.
 
 implemented demo proof:
 

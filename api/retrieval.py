@@ -33,6 +33,11 @@ STOP_WORDS = {
     "what",
     "with",
 }
+RRF_K = 60
+
+
+def clamp_limit(limit: int) -> int:
+    return max(1, min(limit, 20))
 
 
 def terms_for(text: str) -> set[str]:
@@ -41,6 +46,41 @@ def terms_for(text: str) -> set[str]:
 
 def graph_terms(node: dict[str, Any]) -> set[str]:
     return terms_for(" ".join(str(node.get(key, "")) for key in ("id", "label", "type", "source", "summary")))
+
+
+def build_query_plan(question: str, role: str, external: bool) -> dict[str, Any]:
+    terms = terms_for(question)
+    graph = store.graph()
+    matching_nodes = [
+        node
+        for node in graph["nodes"]
+        if terms & graph_terms(node)
+    ][:8]
+    matching_sources = sorted(
+        {
+            node["source"]
+            for node in matching_nodes
+            if node.get("source")
+        }
+    )
+    return {
+        "question_terms": sorted(terms),
+        "detected_entities": [node["label"] for node in matching_nodes],
+        "source_hints": matching_sources,
+        "constraints": {
+            "role": role,
+            "external_output": external,
+            "policy_first": True,
+        },
+        "retrieval_stages": [
+            "dense_vector_qdrant",
+            "lexical_sparse_store",
+            "graph_neighbor_expansion",
+            "reciprocal_rank_fusion",
+            "policy_aware_rerank",
+            "source_diversity_pack",
+        ],
+    }
 
 
 def build_graph_traversal(question: str, vector_hits: list[dict[str, Any]], max_nodes: int = 8) -> dict[str, Any]:
@@ -104,6 +144,131 @@ def build_graph_traversal(question: str, vector_hits: list[dict[str, Any]], max_
         "edges": selected_edges[: max_nodes - 1],
         "path": [node["label"] for node in visited_nodes] or GRAPH_PATH,
     }
+
+
+def chunk_lookup() -> dict[str, dict[str, Any]]:
+    return {chunk["id"]: chunk for chunk in store.chunks()}
+
+
+def hit_from_chunk(chunk: dict[str, Any], score: float, ranker: str) -> dict[str, Any]:
+    return {
+        "score": score,
+        "chunk_id": chunk["id"],
+        "title": chunk["title"],
+        "source": chunk["source"],
+        "text_preview": chunk["text"][:280],
+        "sensitivity": chunk.get("sensitivity", "internal"),
+        "external_output_allowed": chunk.get("external_output_allowed", False),
+        "citations": chunk.get("citations", []),
+        "metadata": chunk.get("metadata", {}),
+        "ranker": ranker,
+    }
+
+
+def graph_expansion_hits(question: str, traversal: dict[str, Any], limit: int) -> list[dict[str, Any]]:
+    terms = terms_for(question)
+    traversal_sources = {
+        node["source"]
+        for node in traversal.get("nodes", [])
+        if node.get("source")
+    }
+    traversal_labels = terms_for(" ".join(node.get("label", "") for node in traversal.get("nodes", [])))
+    hits: list[tuple[float, dict[str, Any]]] = []
+    for chunk in store.chunks():
+        chunk_terms = terms_for(" ".join([chunk["id"], chunk["title"], chunk["source"], chunk["text"]]))
+        source_match = chunk["source"] in traversal_sources
+        label_overlap = len(traversal_labels & chunk_terms)
+        query_overlap = len(terms & chunk_terms)
+        score = query_overlap + label_overlap * 0.5 + (2 if source_match else 0)
+        if score:
+            hits.append((score, chunk))
+    hits.sort(key=lambda item: item[0], reverse=True)
+    return [hit_from_chunk(chunk, score, "graph") for score, chunk in hits[:limit]]
+
+
+def reciprocal_rank_fusion(ranked_lists: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
+    fused: dict[str, dict[str, Any]] = {}
+    for ranker, hits in ranked_lists.items():
+        for rank, hit in enumerate(hits, start=1):
+            chunk_id = hit.get("chunk_id")
+            if not chunk_id:
+                continue
+            candidate = fused.setdefault(
+                chunk_id,
+                {
+                    "chunk_id": chunk_id,
+                    "title": hit.get("title"),
+                    "source": hit.get("source"),
+                    "text_preview": hit.get("text_preview", ""),
+                    "sensitivity": hit.get("sensitivity"),
+                    "external_output_allowed": hit.get("external_output_allowed"),
+                    "citations": hit.get("citations", []),
+                    "metadata": hit.get("metadata", {}),
+                    "rrf_score": 0.0,
+                    "rankers": {},
+                },
+            )
+            candidate["rrf_score"] += 1 / (RRF_K + rank)
+            candidate["rankers"][ranker] = {"rank": rank, "score": hit.get("score")}
+    return sorted(fused.values(), key=lambda item: item["rrf_score"], reverse=True)
+
+
+def rerank_candidates(
+    question: str,
+    fused: list[dict[str, Any]],
+    role: str,
+    external: bool,
+    limit: int,
+) -> list[dict[str, Any]]:
+    chunks = chunk_lookup()
+    query = terms_for(question)
+    source_counts: dict[str, int] = {}
+    scored: list[dict[str, Any]] = []
+    for candidate in fused:
+        chunk = chunks.get(candidate["chunk_id"])
+        if not chunk:
+            continue
+        blocked, reasons = policy.is_blocked(chunk, role=role, external=external)
+        chunk_terms = terms_for(" ".join([chunk["title"], chunk["source"], chunk["text"]]))
+        coverage = len(query & chunk_terms) / max(len(query), 1)
+        multi_signal = max(len(candidate["rankers"]) - 1, 0)
+        citation_bonus = 0.08 if chunk.get("citations") else 0
+        policy_penalty = 1.0 if blocked else 0
+        final_score = (
+            candidate["rrf_score"] * 8
+            + coverage
+            + multi_signal * 0.25
+            + citation_bonus
+            - policy_penalty
+        )
+        scored.append(
+            {
+                **candidate,
+                "final_score": round(final_score, 4),
+                "features": {
+                    "rrf_score": round(candidate["rrf_score"], 5),
+                    "term_coverage": round(coverage, 3),
+                    "multi_signal_rankers": sorted(candidate["rankers"]),
+                    "citation_bonus": citation_bonus,
+                    "blocked_by_policy": blocked,
+                    "policy_reasons": reasons,
+                },
+            }
+        )
+    scored.sort(key=lambda item: item["final_score"], reverse=True)
+
+    packed: list[dict[str, Any]] = []
+    for candidate in scored:
+        source = candidate.get("source", "")
+        if candidate["features"]["blocked_by_policy"]:
+            continue
+        if source_counts.get(source, 0) >= 2 and len(packed) >= 3:
+            continue
+        source_counts[source] = source_counts.get(source, 0) + 1
+        packed.append(candidate)
+        if len(packed) == limit:
+            break
+    return packed
 
 
 def ranked_items(items: list[dict[str, Any]], ranked_chunk_ids: list[str]) -> list[dict[str, Any]]:
@@ -229,10 +394,28 @@ async def query_context_core(
     external: bool = True,
     limit: int = 8,
 ) -> dict[str, Any]:
-    limit = max(1, min(limit, 20))
-    vector = await vector_memory.search(question, limit=limit)
-    ranked_chunk_ids = [hit["chunk_id"] for hit in vector["hits"] if hit.get("chunk_id")]
-    traversal = build_graph_traversal(question, vector["hits"], max_nodes=limit)
+    limit = clamp_limit(limit)
+    fetch_limit = max(limit * 3, 12)
+    query_plan = build_query_plan(question, role=role, external=external)
+    vector = await vector_memory.search(question, limit=fetch_limit)
+    lexical = {
+        "available": True,
+        "collection": "in-memory-sparse",
+        "embedding_source": "none",
+        "fallback": None,
+        "hits": vector_memory.lexical_hits(question, fetch_limit),
+    }
+    traversal = build_graph_traversal(question, vector["hits"] + lexical["hits"], max_nodes=limit)
+    graph_hits = graph_expansion_hits(question, traversal, fetch_limit)
+    fused = reciprocal_rank_fusion(
+        {
+            "dense": vector["hits"],
+            "lexical": lexical["hits"],
+            "graph": graph_hits,
+        }
+    )
+    reranked = rerank_candidates(question, fused, role=role, external=external, limit=limit)
+    ranked_chunk_ids = [hit["chunk_id"] for hit in reranked]
     packet = get_context(
         goal=question,
         org_id=org_id,
@@ -263,13 +446,30 @@ async def query_context_core(
             "external_output": external,
         },
         "vector_hits": vector,
+        "hybrid_retrieval": {
+            "query_plan": query_plan,
+            "rank_fusion": {
+                "algorithm": "reciprocal_rank_fusion",
+                "k": RRF_K,
+                "rankers": ["dense", "lexical", "graph"],
+                "candidate_count": len(fused),
+            },
+            "lexical_hits": lexical,
+            "graph_hits": graph_hits[:limit],
+            "reranked_hits": reranked,
+            "packing": {
+                "source_diversity_cap": 2,
+                "policy_filtered_before_prompt": True,
+                "selected_count": len(selected_context[:limit]),
+            },
+        },
         "graph_traversal": traversal,
         "context_packet": packet,
         "selected_context": selected_context[:limit],
         "blocked_context": packet["blocked_context"],
         "citations": packet["citations"],
         "runtime": {
-            "retrieval": "embedding search -> ephemeral graph traversal -> policy-filtered context packet",
+            "retrieval": "hybrid dense+lexical search -> graph expansion -> rrf fusion -> policy-aware rerank -> context packet",
             "vector_collection": vector["collection"],
             "embedding_source": vector["embedding_source"],
             "graph_source": "local org graph",

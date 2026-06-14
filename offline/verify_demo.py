@@ -112,6 +112,19 @@ def main() -> int:
     assert_true(context_core["server"]["name"] == "fuze-context-core", "context core endpoint is active")
     assert_true(context_core["server"]["cloud_llm_calls"] == 0, "context core stays local")
     assert_true(context_core["vector_hits"]["hits"], "context core returns vector hits")
+    assert_true(
+        context_core["hybrid_retrieval"]["rank_fusion"]["algorithm"] == "reciprocal_rank_fusion",
+        "context core uses reciprocal rank fusion",
+    )
+    assert_true(
+        context_core["hybrid_retrieval"]["rank_fusion"]["rankers"] == ["dense", "lexical", "graph"],
+        "context core fuses dense lexical and graph rankers",
+    )
+    assert_true(context_core["hybrid_retrieval"]["reranked_hits"], "context core reranks fused candidates")
+    assert_true(
+        context_core["hybrid_retrieval"]["packing"]["policy_filtered_before_prompt"] is True,
+        "context core filters policy before prompt assembly",
+    )
     assert_true(context_core["graph_traversal"]["nodes"], "context core traverses graph nodes")
     assert_true(context_core["selected_context"], "context core returns selected context")
     assert_true(context_core["runtime"]["no_cloud_llm_calls"] is True, "context core runtime records zero cloud calls")

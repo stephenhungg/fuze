@@ -133,9 +133,12 @@ does not call a cloud llm. the context core performs:
 
 ```text
 agent question
--> local embedding/vector search in qdrant
--> ephemeral graph walker selects connected org nodes
--> policy engine filters by identity, role, and output target
+-> deterministic query plan with entity/source hints
+-> dense vector search in qdrant
+-> lexical sparse search over local chunks
+-> ephemeral graph walker expands connected evidence nodes
+-> reciprocal rank fusion across dense, lexical, and graph rankers
+-> policy-aware rerank and source-diverse packing
 -> context packet with citations, blocked context, and traversal proof
 ```
 
@@ -143,10 +146,10 @@ implemented demo endpoint:
 
 - `POST /context/query`
 
-the response includes `server`, `vector_hits`, `graph_traversal`,
-`context_packet`, `selected_context`, `blocked_context`, `citations`, and
-`runtime`. this is the contract future workflow agents should use instead of
-querying raw files directly.
+the response includes `server`, `vector_hits`, `hybrid_retrieval`,
+`graph_traversal`, `context_packet`, `selected_context`, `blocked_context`,
+`citations`, and `runtime`. this is the contract future workflow agents should
+use instead of querying raw files directly.
 
 ## demo path
 
