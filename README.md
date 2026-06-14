@@ -69,6 +69,9 @@ python3 -m pip install -r requirements.txt
 
 open `http://localhost:8000`.
 
+on the gb10 venue box, the service is installed as `fuze-api` and is available
+at `http://promaxgb10-5d0c:8000`.
+
 ## demo status
 
 the repo now implements a deterministic local-first vertical slice for the
@@ -83,3 +86,5 @@ anderson foundation report workflow:
 
 ollama/qdrant are runtime infrastructure on the gb10. the app does not make
 cloud llm calls.
+
+see `docs/demo-runbook.md` for venue restart and smoke-test commands.
