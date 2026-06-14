@@ -88,6 +88,16 @@ class ContextQueryRequest(BaseModel):
     limit: int = 8
 
 
+class DirectorySyncRequest(BaseModel):
+    actor: str = "admin"
+
+
+class GroupRoleMappingRequest(BaseModel):
+    group: str
+    role: str
+    actor: str = "admin"
+
+
 class ApprovalDecisionRequest(BaseModel):
     status: str
     actor: str = "alex"
@@ -240,6 +250,33 @@ async def ingestion_run() -> dict[str, Any]:
 @app.get("/identity/users")
 def identity_users() -> dict[str, Any]:
     return {"users": identity.list_users(), "role_map": identity.GROUP_ROLE_MAP}
+
+
+@app.get("/identity/directory")
+def identity_directory() -> dict[str, Any]:
+    return identity.directory_status()
+
+
+@app.post("/identity/sync")
+def identity_sync(request: DirectorySyncRequest) -> dict[str, Any]:
+    result = identity.sync_directory(actor=request.actor)
+    events.record_identity_sync(result)
+    return result
+
+
+@app.post("/identity/group-role-map")
+def identity_group_role_map(request: GroupRoleMappingRequest) -> dict[str, Any]:
+    try:
+        result = identity.update_group_role(group_dn=request.group, role=request.role, actor=request.actor)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    events.record_role_mapping(result)
+    return result
+
+
+@app.get("/identity/access-preview/{user_id}")
+def identity_access_preview(user_id: str, external: bool = True) -> dict[str, Any]:
+    return identity.access_preview(user_id=user_id, external=external)
 
 
 @app.get("/onboarding/flow")

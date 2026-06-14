@@ -47,6 +47,18 @@ def main() -> int:
     assert_true(roles["morgan"] == "grant_manager", "grant manager maps from group")
     assert_true(roles["casey"] == "case_manager", "case manager maps from group")
 
+    directory = request("/identity/directory")
+    assert_true(directory["external_source_of_truth"] is True, "directory source of truth stays external")
+    assert_true(directory["source"]["provisioning"] == "scim 2.0", "directory advertises scim provisioning")
+    assert_true(len(directory["groups"]) >= 6, "directory exposes synced groups")
+    access_preview = request("/identity/access-preview/morgan")
+    assert_true(access_preview["user"]["role"] == "grant_manager", "access preview applies group role mapping")
+    assert_true(access_preview["blocked_count"] >= 1, "access preview shows blocked context")
+
+    sync = request("/identity/sync", {"actor": "verifier"})
+    assert_true(sync["groups_seen"] >= 6, "directory sync sees groups")
+    assert_true(sync["source_of_truth"] == "external directory", "sync does not claim to edit ad membership")
+
     seed = request("/demo/seed", {})
     vector_seed = seed["vector_seed"]
     assert_true(seed["status"] == "seeded", "demo seed endpoint works")

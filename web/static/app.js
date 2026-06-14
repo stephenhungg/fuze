@@ -18,6 +18,7 @@ const vectorMemory = document.querySelector("#vector-memory");
 const contextCore = document.querySelector("#context-core");
 const pitchProof = document.querySelector("#pitch-proof");
 const agentMesh = document.querySelector("#agent-mesh");
+const directoryManagement = document.querySelector("#directory-management");
 const agentStream = document.querySelector("#agent-stream");
 const sseStatus = document.querySelector("#sse-status");
 const eventCount = document.querySelector("#event-count");
@@ -242,6 +243,25 @@ function renderOnboarding(data) {
     .join("");
 }
 
+function renderDirectory(data, preview) {
+  const mappedGroups = data.groups
+    .map((group) => `${group.display_name}: ${group.mapped_role}`)
+    .slice(0, 6);
+  directoryManagement.innerHTML = [
+    linesCard("directory source", [
+      data.source.source,
+      `${data.source.login} login · ${data.source.provisioning} provisioning`,
+      `last sync: ${data.source.last_sync}`,
+    ]),
+    linesCard("group role mappings", mappedGroups, `<span class="tag">${escapeHtml(data.groups.length)} groups</span>`),
+    linesCard("access preview", [
+      `${preview.user.name} · ${preview.user.role}`,
+      `${preview.allowed_count} allowed · ${preview.blocked_count} blocked for external output`,
+      preview.decision,
+    ]),
+  ].join("");
+}
+
 function renderIngestion(result) {
   ingestionStatus.innerHTML = linesCard(
     "sample ingestion",
@@ -336,10 +356,13 @@ async function runAgent() {
     });
     const pitch = await getJson("/demo/pitch");
     const evalResult = await getJson("/context/eval");
+    const directory = await getJson("/identity/directory");
+    const accessPreview = await getJson(`/identity/access-preview/${encodeURIComponent(selectedUser)}`);
     const mesh = await getJson("/agents/status");
     render(result);
     renderIngestion(ingestion);
     renderContextCore(context);
+    renderDirectory(directory, accessPreview);
     renderAgents(mesh);
     vectorMemory.innerHTML = linesCard(
       seed.vector_seed.available ? "qdrant seeded" : "qdrant fallback",
@@ -410,6 +433,11 @@ loadHealth().catch(() => {
 getJson("/onboarding/flow").then(renderOnboarding).catch(() => {
   onboardingFlow.innerHTML = card("onboarding unavailable", "admin flow did not load.");
 });
+Promise.all([getJson("/identity/directory"), getJson("/identity/access-preview/morgan")])
+  .then(([directory, preview]) => renderDirectory(directory, preview))
+  .catch(() => {
+    directoryManagement.innerHTML = card("directory unavailable", "identity adapter did not load.");
+  });
 getJson("/ingestion/status").then(renderIngestion).catch(() => {
   ingestionStatus.innerHTML = card("ingestion unavailable", "sample corpus did not load.");
 });

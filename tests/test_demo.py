@@ -173,6 +173,45 @@ def test_identity_users_expose_group_role_mapping():
     assert data["role_map"]["cn=grant-team"] == "grant_manager"
 
 
+def test_identity_directory_sync_role_mapping_and_access_preview():
+    directory = client.get("/identity/directory")
+    assert directory.status_code == 200
+    data = directory.json()
+    assert data["external_source_of_truth"] is True
+    assert data["source"]["provisioning"] == "scim 2.0"
+    assert any(group["dn"] == "cn=grant-team" for group in data["groups"])
+
+    sync = client.post("/identity/sync", json={"actor": "alex"})
+    assert sync.status_code == 200
+    assert sync.json()["groups_seen"] >= 6
+
+    update = client.post(
+        "/identity/group-role-map",
+        json={"group": "cn=grant-team", "role": "program_lead", "actor": "alex"},
+    )
+    assert update.status_code == 200
+    assert update.json()["previous_role"] == "grant_manager"
+
+    try:
+        users = client.get("/identity/users").json()
+        morgan = next(user for user in users["users"] if user["id"] == "morgan")
+        assert morgan["role"] == "program_lead"
+
+        preview = client.get("/identity/access-preview/morgan").json()
+        assert preview["user"]["role"] == "program_lead"
+        assert preview["blocked_count"] > 0
+
+        mesh = client.get("/agents/status").json()
+        event_types = {event["type"] for event in mesh["events"]}
+        assert {"identity_sync", "role_mapping"}.issubset(event_types)
+    finally:
+        reset = client.post(
+            "/identity/group-role-map",
+            json={"group": "cn=grant-team", "role": "grant_manager", "actor": "test-reset"},
+        )
+        assert reset.status_code == 200
+
+
 def test_context_packet_records_identity_and_role():
     client.post("/demo/seed")
     client.post("/ingestion/run")

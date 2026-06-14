@@ -202,3 +202,30 @@ def record_ingestion(result: dict[str, Any]) -> None:
         f"mapped {len(result['connectors'])} connector(s) from sample corpus",
         {"connector_counts": result["connector_counts"]},
     )
+
+
+def record_identity_sync(result: dict[str, Any]) -> None:
+    emit(
+        "policy-agent",
+        "identity_sync",
+        f"synced {result['users_seen']} user(s) and {result['groups_seen']} group(s) from directory",
+        {
+            "actor": result["actor"],
+            "last_sync": result["last_sync"],
+            "membership_edges": result["membership_edges"],
+        },
+    )
+
+
+def record_role_mapping(result: dict[str, Any]) -> None:
+    emit(
+        "policy-agent",
+        "role_mapping",
+        f"mapped {result['group']} to {result['role']}",
+        {
+            "actor": result["actor"],
+            "group": result["group"],
+            "previous_role": result["previous_role"],
+            "role": result["role"],
+        },
+    )

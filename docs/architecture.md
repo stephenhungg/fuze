@@ -58,6 +58,13 @@ what can leave the system.
 implemented demo:
 
 - `GET /identity/users` returns seeded users and group mappings
+- `GET /identity/directory` returns directory sync status, users, groups, and
+  group-to-role mappings
+- `POST /identity/sync` simulates an entra/ad graph delta sync without taking
+  ownership of directory membership
+- `POST /identity/group-role-map` updates fuze-owned group-to-role mappings
+- `GET /identity/access-preview/{user_id}` previews allowed and blocked context
+  for a user before a workflow runs
 - the dashboard identity selector switches between seeded users
 - context packets include `user`, `role`, and `groups`
 - audit packets record the same identity fields
@@ -193,6 +200,10 @@ identity/role mapping, and agent mesh direction.
 - `GET /observability/summary`
 - `GET /events/stream`
 - `GET /onboarding/flow`
+- `GET /identity/directory`
+- `POST /identity/sync`
+- `POST /identity/group-role-map`
+- `GET /identity/access-preview/{user_id}`
 - `POST /tools/get_context`
 - `POST /context/query`
 - `GET /context/eval`
