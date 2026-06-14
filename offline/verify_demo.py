@@ -106,6 +106,12 @@ def main() -> int:
     assert_true("connect-docs" in step_ids, "onboarding covers document ingestion setup")
     assert_true("activate-agents" in step_ids, "onboarding covers agent activation")
 
+    ingestion = request("/ingestion/run", {})
+    assert_true(ingestion["files_seen"] == 13, "sample ingestion sees thirteen files")
+    assert_true(ingestion["chunks_created"] > ingestion["files_seen"], "sample ingestion creates document chunks")
+    assert_true(ingestion["pii_chunks"] >= 2, "sample ingestion flags pii chunks")
+    assert_true("case_notes.txt" in ingestion["restricted_files"], "sample ingestion tracks restricted case notes")
+
     pitch = request("/demo/pitch")
     assert_true("local_first_always_on" in pitch["rubric_mapping"], "pitch maps local-first rubric")
     assert_true(pitch["demo_result"]["readiness_score"] == 72, "pitch packet matches demo readiness")

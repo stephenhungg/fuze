@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import agent, events, identity, onboarding, policy, retrieval, vector_memory
+from . import agent, events, identity, ingest, onboarding, policy, retrieval, vector_memory
 from .db import DEMO_GOAL, store
 
 
@@ -207,6 +207,19 @@ async def events_stream() -> StreamingResponse:
 @app.get("/observability/summary")
 def observability_summary() -> dict[str, Any]:
     return events.observability_summary()
+
+
+@app.get("/ingestion/status")
+def ingestion_status() -> dict[str, Any]:
+    result = ingest.ingest_sample_corpus()
+    return {key: value for key, value in result.items() if key != "chunks"}
+
+
+@app.post("/ingestion/run")
+def ingestion_run() -> dict[str, Any]:
+    result = ingest.ingest_sample_corpus()
+    events.record_ingestion(result)
+    return result
 
 
 @app.get("/identity/users")

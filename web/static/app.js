@@ -11,6 +11,7 @@ const alwaysOn = document.querySelector("#always-on");
 const contextList = document.querySelector("#context-list");
 const identityCard = document.querySelector("#identity-card");
 const orgProfile = document.querySelector("#org-profile");
+const ingestionStatus = document.querySelector("#ingestion-status");
 const vectorMemory = document.querySelector("#vector-memory");
 const pitchProof = document.querySelector("#pitch-proof");
 const agentMesh = document.querySelector("#agent-mesh");
@@ -212,6 +213,20 @@ function renderOnboarding(data) {
     .join("");
 }
 
+function renderIngestion(result) {
+  ingestionStatus.innerHTML = linesCard(
+    "sample ingestion",
+    [
+      `${result.files_seen} files · ${result.chunks_created} chunks`,
+      `${result.pii_chunks} pii chunk(s) · ${result.restricted_files.length} restricted/non-exportable files`,
+      Object.entries(result.connector_counts)
+        .map(([connector, count]) => `${connector}: ${count}`)
+        .join(", "),
+    ],
+    `<span class="tag">${escapeHtml(result.status)}</span>`,
+  );
+}
+
 async function refreshApprovals() {
   const data = await getJson("/approvals");
   renderApprovals(data.approvals);
@@ -239,6 +254,7 @@ async function runAgent() {
     const selectedUser = userSelect.value || "morgan";
     const selectedRole = userSelect.selectedOptions[0]?.dataset.role || "grant_manager";
     const seed = await getJson("/demo/seed", { method: "POST" });
+    const ingestion = await getJson("/ingestion/run", { method: "POST" });
     const result = await getJson("/agent/run", {
       method: "POST",
       body: JSON.stringify({ goal: goalInput.value, role: selectedRole, user_id: selectedUser }),
@@ -250,6 +266,7 @@ async function runAgent() {
     const pitch = await getJson("/demo/pitch");
     const mesh = await getJson("/agents/status");
     render(result);
+    renderIngestion(ingestion);
     renderAgents(mesh);
     vectorMemory.innerHTML = linesCard(
       seed.vector_seed.available ? "qdrant seeded" : "qdrant fallback",
@@ -318,6 +335,9 @@ loadHealth().catch(() => {
 });
 getJson("/onboarding/flow").then(renderOnboarding).catch(() => {
   onboardingFlow.innerHTML = card("onboarding unavailable", "admin flow did not load.");
+});
+getJson("/ingestion/status").then(renderIngestion).catch(() => {
+  ingestionStatus.innerHTML = card("ingestion unavailable", "sample corpus did not load.");
 });
 connectEventStream();
 setInterval(() => {

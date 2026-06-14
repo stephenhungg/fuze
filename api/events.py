@@ -182,3 +182,23 @@ def record_approval_decision(approval: dict[str, Any]) -> None:
         f"recorded approval decision for {approval['id']}",
         {"approval_id": approval["id"], "status": approval["status"]},
     )
+
+
+def record_ingestion(result: dict[str, Any]) -> None:
+    emit(
+        "index-agent",
+        "ingestion",
+        f"ingested {result['files_seen']} file(s) into {result['chunks_created']} chunk(s)",
+        {
+            "files_seen": result["files_seen"],
+            "chunks_created": result["chunks_created"],
+            "pii_chunks": result["pii_chunks"],
+            "restricted_files": result["restricted_files"],
+        },
+    )
+    emit(
+        "graph-memory-agent",
+        "graph_update",
+        f"mapped {len(result['connectors'])} connector(s) from sample corpus",
+        {"connector_counts": result["connector_counts"]},
+    )

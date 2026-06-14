@@ -1,8 +1,14 @@
 import json
 from pathlib import Path
 
+from fastapi.testclient import TestClient
+
+from api.ingest import ingest_sample_corpus
+from api.main import app
+
 
 SAMPLE_ROOT = Path(__file__).resolve().parents[1] / "sample_data" / "harbor_light"
+client = TestClient(app)
 
 
 def test_harbor_light_sample_corpus_has_ingestion_manifest():
@@ -50,3 +56,30 @@ def test_sample_corpus_contains_policy_relevant_content():
     assert "client maya, age 15" in case_notes
     assert "1284" in metrics
     assert "case note privacy" in risk_register
+
+
+def test_sample_ingestion_partitions_files_with_policy_metadata():
+    result = ingest_sample_corpus()
+
+    assert result["status"] == "ingested"
+    assert result["files_seen"] == 13
+    assert result["chunks_created"] > result["files_seen"]
+    assert result["pii_chunks"] >= 2
+    assert "case_notes.txt" in result["restricted_files"]
+    assert result["connector_counts"]["connector-m365-sharepoint"] >= 1
+    assert all("document_hash" in chunk for chunk in result["chunks"])
+    assert any(chunk["source"] == "program_metrics.csv" for chunk in result["chunks"])
+    assert any(chunk["sensitivity"] == "restricted" for chunk in result["chunks"])
+
+
+def test_ingestion_api_emits_index_agent_event():
+    response = client.post("/ingestion/run")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["files_seen"] == 13
+    assert data["chunks_created"] > 13
+    assert data["pii_chunks"] >= 2
+
+    mesh = client.get("/agents/status").json()
+    assert any(event["type"] == "ingestion" for event in mesh["events"])
