@@ -176,6 +176,7 @@ button {
 
 .card p {
   white-space: pre-line;
+  overflow-wrap: anywhere;
 }
 
 .panel-head {

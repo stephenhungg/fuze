@@ -164,6 +164,7 @@ implemented now:
 - seeded nonprofit grant workflow
 - demo identity adapter with active directory / entra-style group-to-role mapping
 - dashboard identity switcher for role-aware context packets
+- lightweight local agent mesh status and event stream
 - policy-filtered context packet
 - tasks, drafts, approval packet, audit trail
 - always-on monitor

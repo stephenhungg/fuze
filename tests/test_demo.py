@@ -140,3 +140,20 @@ def test_case_manager_can_use_restricted_context_internally():
     )
     allowed_ids = {item["id"] for item in internal["allowed_context"]}
     assert "case-1" in allowed_ids
+
+
+def test_agent_mesh_status_and_events():
+    client.post(
+        "/agent/run",
+        json={"goal": "get us ready for the anderson foundation report", "user_id": "morgan", "role": "grant_manager"},
+    )
+    response = client.get("/agents/status")
+
+    assert response.status_code == 200
+    data = response.json()
+    agent_ids = {agent["id"] for agent in data["agents"]}
+    assert "index-agent" in agent_ids
+    assert "policy-agent" in agent_ids
+    assert "grant-readiness-agent" in agent_ids
+    assert data["events"]
+    assert data["transport"] == "local in-process a2a-style messages"

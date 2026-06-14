@@ -12,6 +12,8 @@ const contextList = document.querySelector("#context-list");
 const identityCard = document.querySelector("#identity-card");
 const vectorMemory = document.querySelector("#vector-memory");
 const pitchProof = document.querySelector("#pitch-proof");
+const agentMesh = document.querySelector("#agent-mesh");
+const agentStream = document.querySelector("#agent-stream");
 const graph = document.querySelector("#graph");
 const blocked = document.querySelector("#blocked");
 const score = document.querySelector("#score");
@@ -124,6 +126,16 @@ function render(result) {
   ].join("");
 }
 
+function renderAgents(mesh) {
+  agentMesh.innerHTML = mesh.agents
+    .map((agent) => linesCard(agent.label, [`${agent.kind} · ${agent.status}`, agent.description]))
+    .join("");
+  agentStream.innerHTML = mesh.events
+    .slice(0, 8)
+    .map((event) => card(`${event.agent_id} · ${event.type}`, event.message, `<span class="tag">${escapeHtml(event.created_at)}</span>`))
+    .join("");
+}
+
 async function runAgent() {
   runBtn.disabled = true;
   runBtn.textContent = "running locally...";
@@ -140,7 +152,9 @@ async function runAgent() {
       body: JSON.stringify({ query: goalInput.value, limit: 3 }),
     });
     const pitch = await getJson("/demo/pitch");
+    const mesh = await getJson("/agents/status");
     render(result);
+    renderAgents(mesh);
     vectorMemory.innerHTML = linesCard(
       seed.vector_seed.available ? "qdrant seeded" : "qdrant fallback",
       [`${seed.vector_seed.points || 0} points`, seed.vector_seed.embedding_source || vector.embedding_source],
@@ -178,3 +192,7 @@ loadUsers().then(runAgent).catch(() => {
 loadHealth().catch(() => {
   ollama.textContent = "unknown";
 });
+setInterval(() => {
+  getJson("/agents/status").then(renderAgents).catch(() => {});
+  loadHealth().catch(() => {});
+}, 10000);

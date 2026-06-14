@@ -61,6 +61,7 @@ look for:
 - `readiness_score: 72`
 - three tasks
 - blocked context present
+- agent stream events present
 
 ## identity proof
 
@@ -73,6 +74,13 @@ the api proof:
 
 ```bash
 curl -fsS http://127.0.0.1:8000/identity/users
+```
+
+## agent mesh proof
+
+```bash
+curl -fsS http://127.0.0.1:8000/agents/status
+curl -fsS http://127.0.0.1:8000/agents/events
 ```
 
 ## vector memory proof

@@ -78,6 +78,13 @@ def main() -> int:
         hit_ids = [hit["chunk_id"] for hit in search["hits"]]
         assert_true("grant-req-1" in hit_ids, "vector search finds grant requirements")
 
+    mesh = request("/agents/status")
+    agent_ids = {agent["id"] for agent in mesh["agents"]}
+    assert_true("index-agent" in agent_ids, "index agent is registered")
+    assert_true("policy-agent" in agent_ids, "policy agent is registered")
+    assert_true("grant-readiness-agent" in agent_ids, "grant workflow agent is registered")
+    assert_true(len(mesh["events"]) >= 1, "agent stream has events")
+
     pitch = request("/demo/pitch")
     assert_true("local_first_always_on" in pitch["rubric_mapping"], "pitch maps local-first rubric")
     assert_true(pitch["demo_result"]["readiness_score"] == 72, "pitch packet matches demo readiness")

@@ -64,6 +64,14 @@ implemented demo:
 - the demo adapter models active directory / entra-style group mapping without
   requiring real directory setup at the venue
 
+implemented agent stream:
+
+- `GET /agents/status` returns registered logical agents and recent events
+- `GET /agents/events` returns the recent event stream
+- manual and always-on runs emit index, policy, workflow, approval, and audit
+  events
+- the dashboard renders agent mesh status and recent handoffs
+
 ## a2a-style mesh
 
 target agents:

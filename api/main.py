@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import agent, identity, policy, retrieval, vector_memory
+from . import agent, events, identity, policy, retrieval, vector_memory
 from .db import DEMO_GOAL, store
 
 
@@ -97,6 +97,7 @@ async def monitor_loop() -> None:
     while True:
         try:
             result = agent.run_agent(goal=f"always-on monitor: {DEMO_GOAL}", role="grant_manager", user_id="morgan")
+            events.record_run(result, trigger="always-on")
             monitor_state.update(
                 {
                     "runs": monitor_state["runs"] + 1,
@@ -139,7 +140,9 @@ async def seed() -> dict[str, Any]:
 
 @app.post("/agent/run")
 def run_agent(request: GoalRequest) -> dict[str, Any]:
-    return agent.run_agent(goal=request.goal, role=request.role, user_id=request.user_id)
+    result = agent.run_agent(goal=request.goal, role=request.role, user_id=request.user_id)
+    events.record_run(result, trigger="manual")
+    return result
 
 
 @app.get("/demo/pitch")
@@ -149,7 +152,22 @@ def demo_pitch() -> dict[str, Any]:
 
 @app.get("/agent/status")
 def agent_status() -> dict[str, Any]:
-    return {"always_on": monitor_state, "tasks": store.tasks, "audit_runs": store.audit_runs[-5:]}
+    return {
+        "always_on": monitor_state,
+        "tasks": store.tasks,
+        "audit_runs": store.audit_runs[-5:],
+        "mesh": events.agent_status(),
+    }
+
+
+@app.get("/agents/status")
+def agents_status() -> dict[str, Any]:
+    return events.agent_status()
+
+
+@app.get("/agents/events")
+def agents_events() -> dict[str, Any]:
+    return {"events": events.agent_status()["events"]}
 
 
 @app.get("/identity/users")

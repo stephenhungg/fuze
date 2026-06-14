@@ -170,6 +170,7 @@ def pitch_packet() -> dict[str, Any]:
             "seeds/searches qdrant collection fuze_context",
             "keeps cloud llm calls at 0",
             "always-on monitor refreshes readiness/audit state",
+            "local agent mesh streams index, policy, workflow, approval, and audit events",
             "policy checks block pii while preserving audit evidence",
         ],
         "rubric_mapping": {
