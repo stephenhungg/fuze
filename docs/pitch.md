@@ -8,7 +8,9 @@ meeting notes, case notes, metrics, approvals, and internal owners.
 
 most orgs cannot safely hand all of that to a cloud agent.
 
-fuze fixes that by running the memory and governance layer locally on the gb10.
+fuze fixes that by turning the dell gb10 into an on-prem agent hub: shared local
+inference, governed organizational memory, long-running agents, and dashboard
+streams for staff.
 
 ## 0:45 - what fuze is
 
@@ -28,6 +30,10 @@ goal -> operational context -> policy -> action packet -> approval -> audit
 
 the agent can know more because the data stays local, and it can act more safely
 because every retrieval/output/action is policy checked.
+
+for nonprofits, this matters because staff should not have to download models or
+learn ai infrastructure. they log into a dashboard, while the gb10 hosts the
+agents, memory, permissions, approvals, and audit trail.
 
 ## 1:30 - demo setup
 
@@ -105,6 +111,10 @@ examples:
 fuze lets companies run always-on agents inside the trust boundary without
 turning governance into an afterthought.
 
+the wedge is nonprofits with limited technical capacity. the expansion path is
+regulated teams that need the same on-prem pattern with stronger identity
+integration.
+
 ## 4:30 - technical proof
 
 the demo runs on the gb10:
@@ -117,6 +127,10 @@ the demo runs on the gb10:
 - no cloud llm calls
 - always-on monitor loop
 - audit trail with policy checks and approvals
+- centralized agent hub pattern: many lightweight logical agents sharing one
+  local inference runtime
+- product-next identity: active directory / entra id / ldap / okta group mapping
+  into fuze roles and policies
 
 ## rubric mapping
 
@@ -126,6 +140,7 @@ local-first + always-on:
 - uses local ollama and qdrant
 - cloud llm calls are `0`
 - always-on monitor refreshes state over time
+- staff access through the dashboard instead of installing local models
 
 business value:
 
@@ -133,6 +148,8 @@ business value:
   approval packets
 - finds missing info before deadline
 - prevents sensitive case-note leakage
+- fits low-technical-capacity nonprofits through template-based onboarding and
+  role-based permissions
 
 demo + pitch:
 

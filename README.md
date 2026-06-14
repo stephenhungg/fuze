@@ -6,6 +6,11 @@ fuze is a local-first memory and governance layer for always-on business agents.
 the hackathon demo target is nonprofit grant reporting, but the architecture
 should stay skill-driven and runtime-agnostic.
 
+product direction: fuze is an on-prem agent hub for nonprofits and regulated
+teams. the dell gb10 hosts shared local inference, long-running agents, memory,
+policy, approvals, and audit so staff can use governed agents from a dashboard
+without installing local models.
+
 ## thesis
 
 cloud agents are context-starved because organizations cannot safely give them
@@ -91,6 +96,8 @@ cloud llm calls.
 
 see `docs/demo-runbook.md` for venue restart and smoke-test commands.
 see `docs/pitch.md` for the 5-minute judging talk track.
+see `docs/product-context.md` for the nonprofit onboarding, a2a-style agent
+mesh, and active directory / entra / ldap role-mapping direction.
 
 one-command verification:
 
