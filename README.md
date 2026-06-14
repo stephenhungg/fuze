@@ -90,3 +90,4 @@ ollama/qdrant are runtime infrastructure on the gb10. the app does not make
 cloud llm calls.
 
 see `docs/demo-runbook.md` for venue restart and smoke-test commands.
+see `docs/pitch.md` for the 5-minute judging talk track.

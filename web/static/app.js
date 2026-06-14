@@ -7,6 +7,7 @@ const qdrant = document.querySelector("#qdrant");
 const alwaysOn = document.querySelector("#always-on");
 const contextList = document.querySelector("#context-list");
 const vectorMemory = document.querySelector("#vector-memory");
+const pitchProof = document.querySelector("#pitch-proof");
 const graph = document.querySelector("#graph");
 const blocked = document.querySelector("#blocked");
 const score = document.querySelector("#score");
@@ -106,11 +107,17 @@ async function runAgent() {
       method: "POST",
       body: JSON.stringify({ query: goalInput.value, limit: 3 }),
     });
+    const pitch = await getJson("/demo/pitch");
     render(result);
     vectorMemory.innerHTML = card(
       seed.vector_seed.available ? "qdrant seeded" : "qdrant fallback",
       `${seed.vector_seed.points || 0} points\n${seed.vector_seed.embedding_source || vector.embedding_source}`,
       `<span class="tag">${escapeHtml(vector.hits.map((hit) => hit.chunk_id).join(", ") || "fallback context")}</span>`,
+    );
+    pitchProof.innerHTML = card(
+      "rubric fit",
+      `local-first: ${pitch.rubric_mapping.local_first_always_on}\nbusiness value: ${pitch.rubric_mapping.business_value}`,
+      `<span class="tag">${escapeHtml(pitch.technical_proof[3])}</span>`,
     );
   } finally {
     runBtn.disabled = false;

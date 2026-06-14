@@ -140,6 +140,11 @@ def run_agent(request: GoalRequest) -> dict[str, Any]:
     return agent.run_agent(goal=request.goal, role=request.role)
 
 
+@app.get("/demo/pitch")
+def demo_pitch() -> dict[str, Any]:
+    return agent.pitch_packet()
+
+
 @app.get("/agent/status")
 def agent_status() -> dict[str, Any]:
     return {"always_on": monitor_state, "tasks": store.tasks, "audit_runs": store.audit_runs[-5:]}

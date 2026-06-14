@@ -136,3 +136,37 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager") -> dict[str, A
         "drafts": report,
         "audit": audit,
     }
+
+
+def pitch_packet() -> dict[str, Any]:
+    return {
+        "one_liner": "fuze is a local-first memory and governance layer for always-on business agents.",
+        "problem": "companies cannot safely pour broad private context into cloud agents, so those agents stay context-starved.",
+        "insight": "local ai moves the context boundary onto the gb10, but local still needs governance at retrieval, output, and action time.",
+        "demo_goal": DEMO_GOAL,
+        "demo_result": {
+            "readiness_score": 72,
+            "skill": "Nonprofit Grants",
+            "tasks_created": [
+                "ask Jordan for May volunteer hours",
+                "ask Sarah to confirm attendance data",
+                "approve third anonymized story",
+            ],
+            "blocked_context": ["minor name", "address", "raw case note"],
+            "approvals_required": ["external report export", "third anonymized story"],
+        },
+        "technical_proof": [
+            "runs on the gb10 through fuze-api, ollama, and qdrant",
+            "uses local ollama models and nomic-embed-text embeddings",
+            "seeds/searches qdrant collection fuze_context",
+            "keeps cloud llm calls at 0",
+            "always-on monitor refreshes readiness/audit state",
+            "policy checks block pii while preserving audit evidence",
+        ],
+        "rubric_mapping": {
+            "local_first_always_on": "gb10 service, local ollama, qdrant, always-on monitor, cloud calls 0",
+            "business_value": "grant reporting readiness workflow with missing-info tasks, drafts, and approval packet",
+            "demo_pitch": "three-panel ui shows goal, graph traversal, readiness, drafts, blocked context, and audit",
+            "technical_execution": "tested fastapi app with live gb10 services and browser checks",
+        },
+    }

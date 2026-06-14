@@ -67,6 +67,16 @@ def test_vector_search_endpoint_has_safe_fallback_shape():
     assert "embedding_source" in data
 
 
+def test_pitch_packet_maps_to_judging_rubric():
+    response = client.get("/demo/pitch")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "local_first_always_on" in data["rubric_mapping"]
+    assert data["demo_result"]["readiness_score"] == 72
+    assert "cloud llm calls at 0" in " ".join(data["technical_proof"])
+
+
 def test_policy_blocks_raw_external_pii():
     response = client.post(
         "/tools/policy_check",

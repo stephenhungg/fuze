@@ -65,3 +65,11 @@ curl -fsS -X POST http://127.0.0.1:8000/tools/vector_search \
 ```
 
 expected collection: `fuze_context`.
+
+## pitch packet
+
+```bash
+curl -fsS http://127.0.0.1:8000/demo/pitch
+```
+
+talk track: `docs/pitch.md`.
