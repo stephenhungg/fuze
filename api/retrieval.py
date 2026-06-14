@@ -41,6 +41,7 @@ def get_context(
             "text": chunk["text"],
             "citations": chunk.get("citations", []),
             "sensitivity": chunk.get("sensitivity", "internal"),
+            "metadata": chunk.get("metadata", {}),
         }
         if blocked:
             blocked_context.append({**item, "reasons": reasons, "redacted_preview": policy.redact(chunk["text"])})
@@ -70,6 +71,7 @@ def get_context(
         "prepare report outline for human approval",
     ]
 
+    snapshot = store.snapshot()
     packet = {
         "goal": goal,
         "org_id": org_id,
@@ -83,6 +85,12 @@ def get_context(
         },
         "role": role,
         "groups": user["groups"],
+        "org_profile": snapshot["org_profile"],
+        "connectors": snapshot["connectors"],
+        "staff_profiles": snapshot["staff_profiles"],
+        "funders": snapshot["funders"],
+        "programs": snapshot["programs"],
+        "metrics": snapshot["metrics"],
         "graph_path": GRAPH_PATH,
         "relevant_nodes": store.graph()["nodes"],
         "evidence": allowed_context,

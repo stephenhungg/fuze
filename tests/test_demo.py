@@ -29,6 +29,12 @@ def test_agent_run_produces_hackathon_demo_packet():
     ]
     assert len(data["tasks"]) == 3
     assert len(data["approvals"]) == 2
+    assert packet["org_profile"]["name"] == "Harbor Light Community Services"
+    assert len(packet["connectors"]) == 4
+    assert len(packet["staff_profiles"]) == 5
+    assert len(packet["funders"]) == 3
+    assert len(packet["programs"]) == 3
+    assert len(packet["metrics"]) == 4
     assert "may volunteer hours" in packet["missing_info"][0]["label"]
     assert packet["blocked_context"]
     assert data["audit"]["model_runtime"]["cloud_calls"] == 0
@@ -54,6 +60,9 @@ def test_demo_seed_reports_vector_memory_status():
     assert data["status"] == "seeded"
     assert "vector_seed" in data
     assert "embedding_source" in data["vector_seed"]
+    assert len(data["snapshot"]["chunks"]) >= 13
+    assert len(data["snapshot"]["connectors"]) == 4
+    assert len(data["snapshot"]["staff_profiles"]) == 5
 
 
 def test_vector_search_endpoint_has_safe_fallback_shape():
@@ -117,6 +126,8 @@ def test_context_packet_records_identity_and_role():
     assert data["user"]["id"] == "morgan"
     assert data["role"] == "grant_manager"
     assert data["groups"] == ["cn=grant-team"]
+    assert any(connector["id"] == "connector-m365-sharepoint" for connector in data["connectors"])
+    assert any(metric["id"] == "metric-food-cost-variance" for metric in data["metrics"])
     assert any(item["id"] == "case-1" for item in data["blocked_context"])
 
 

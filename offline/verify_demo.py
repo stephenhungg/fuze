@@ -53,7 +53,7 @@ def main() -> int:
     assert_true(vector_seed["collection"] == "fuze_context", "qdrant collection is fuze_context")
     if health["qdrant"]["available"]:
         assert_true(vector_seed["available"] is True, "qdrant seed is available")
-        assert_true(vector_seed["points"] == 5, "qdrant has five demo memory points")
+        assert_true(vector_seed["points"] >= 13, "qdrant has comprehensive demo memory points")
 
     run = request(
         "/agent/run",
@@ -64,6 +64,11 @@ def main() -> int:
     assert_true(packet["user"]["id"] == "morgan", "context packet records user identity")
     assert_true(packet["role"] == "grant_manager", "context packet records role")
     assert_true(packet["readiness_score"] == 72, "readiness score is 72")
+    assert_true(packet["org_profile"]["name"] == "Harbor Light Community Services", "org profile is present")
+    assert_true(len(packet["connectors"]) == 4, "connector profiles are present")
+    assert_true(len(packet["staff_profiles"]) == 5, "staff profiles are present")
+    assert_true(len(packet["funders"]) == 3, "funder profiles are present")
+    assert_true(len(packet["metrics"]) == 4, "operating metrics are present")
     assert_true(len(run["tasks"]) == 3, "three action tasks created")
     assert_true(len(run["approvals"]) == 2, "two approval gates created")
     assert_true(len(packet["blocked_context"]) >= 1, "sensitive context is blocked")

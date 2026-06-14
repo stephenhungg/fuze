@@ -10,6 +10,7 @@ const qdrant = document.querySelector("#qdrant");
 const alwaysOn = document.querySelector("#always-on");
 const contextList = document.querySelector("#context-list");
 const identityCard = document.querySelector("#identity-card");
+const orgProfile = document.querySelector("#org-profile");
 const vectorMemory = document.querySelector("#vector-memory");
 const pitchProof = document.querySelector("#pitch-proof");
 const agentMesh = document.querySelector("#agent-mesh");
@@ -90,6 +91,24 @@ function render(result) {
     `role: ${packet.role}`,
     `groups: ${packet.groups.join(", ")}`,
   ]);
+
+  orgProfile.innerHTML = [
+    linesCard("org profile", [
+      packet.org_profile.name,
+      `${packet.org_profile.staff_count} staff · ${packet.org_profile.volunteer_count} volunteers · ${packet.org_profile.active_grants} active grants`,
+      packet.org_profile.risk_posture,
+    ]),
+    linesCard(
+      "systems connected",
+      packet.connectors.map((connector) => `${connector.label}: ${connector.status}`),
+      `<span class="tag">${escapeHtml(packet.connectors.length)} connectors</span>`,
+    ),
+    linesCard(
+      "operating metrics",
+      packet.metrics.map((metric) => `${metric.label}: ${metric.value ?? "missing"} · ${metric.status}`),
+      `<span class="tag">${escapeHtml(packet.metrics.length)} metrics</span>`,
+    ),
+  ].join("");
 
   contextList.innerHTML = packet.allowed_context
     .map((item) => card(item.title, item.text, `<span class="tag">${escapeHtml(item.source)}</span>`))

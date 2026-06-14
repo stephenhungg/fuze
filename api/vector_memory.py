@@ -88,6 +88,7 @@ async def seed() -> dict[str, Any]:
                     "external_output_allowed": chunk.get("external_output_allowed", False),
                     "citations": chunk.get("citations", []),
                     "allowed_roles": chunk.get("allowed_roles", []),
+                    "metadata": chunk.get("metadata", {}),
                 },
             }
         )
