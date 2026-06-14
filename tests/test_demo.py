@@ -1,6 +1,6 @@
 from fastapi.testclient import TestClient
 
-from api.main import app
+from api.main import app, sse_frame
 
 
 client = TestClient(app)
@@ -158,6 +158,37 @@ def test_agent_mesh_status_and_events():
     assert "grant-readiness-agent" in agent_ids
     assert data["events"]
     assert data["transport"] == "local in-process a2a-style messages"
+
+
+def test_observability_summary_and_sse_stream_shape():
+    client.post(
+        "/agent/run",
+        json={"goal": "get us ready for the anderson foundation report", "user_id": "morgan", "role": "grant_manager"},
+    )
+
+    summary = client.get("/observability/summary")
+    assert summary.status_code == 200
+    data = summary.json()
+    assert data["sse"]["endpoint"] == "/events/stream"
+    assert data["sse"]["transport"] == "text/event-stream"
+    assert data["events_buffered"] >= 1
+    assert "agent-health" in {dashboard["id"] for dashboard in data["dashboards"]}
+
+    frame = sse_frame("agent_event", {"ok": True}, "evt-test")
+    assert frame.startswith("id: evt-test\nevent: agent_event\ndata:")
+    assert frame.endswith("\n\n")
+
+
+def test_onboarding_flow_covers_identity_docs_and_agents():
+    response = client.get("/onboarding/flow")
+
+    assert response.status_code == 200
+    data = response.json()
+    step_ids = {step["id"] for step in data["flow"]}
+    assert {"identity", "role-map", "connect-docs", "ingest", "activate-agents"}.issubset(step_ids)
+    assert "scim 2.0" in data["identity_management"]["provisioning"]
+    assert "microsoft graph delta queries" in data["identity_management"]["directory_sync"]
+    assert "graph webhooks/change notifications" in data["doc_ingestion"]["change_detection"]
 
 
 def test_approval_queue_created_and_decision_is_auditable():

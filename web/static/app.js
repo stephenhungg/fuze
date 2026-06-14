@@ -14,6 +14,11 @@ const vectorMemory = document.querySelector("#vector-memory");
 const pitchProof = document.querySelector("#pitch-proof");
 const agentMesh = document.querySelector("#agent-mesh");
 const agentStream = document.querySelector("#agent-stream");
+const sseStatus = document.querySelector("#sse-status");
+const eventCount = document.querySelector("#event-count");
+const policyCount = document.querySelector("#policy-count");
+const approvalCount = document.querySelector("#approval-count");
+const onboardingFlow = document.querySelector("#onboarding-flow");
 const graph = document.querySelector("#graph");
 const blocked = document.querySelector("#blocked");
 const score = document.querySelector("#score");
@@ -165,6 +170,27 @@ function renderAgents(mesh) {
     .slice(0, 8)
     .map((event) => card(`${event.agent_id} · ${event.type}`, event.message, `<span class="tag">${escapeHtml(event.created_at)}</span>`))
     .join("");
+  eventCount.textContent = mesh.event_count;
+  policyCount.textContent = mesh.events.filter((event) => event.agent_id === "policy-agent").length;
+  approvalCount.textContent = mesh.events.filter((event) => event.agent_id === "approval-agent").length;
+}
+
+function renderObservability(summary) {
+  eventCount.textContent = summary.events_buffered;
+  policyCount.textContent = summary.agent_counts["policy-agent"] || 0;
+  approvalCount.textContent = summary.agent_counts["approval-agent"] || 0;
+}
+
+function renderOnboarding(data) {
+  onboardingFlow.innerHTML = data.flow
+    .map((step) =>
+      linesCard(
+        step.label,
+        [`${step.owner} · ${step.status}`, step.details],
+        `<span class="tag">${escapeHtml(step.id)}</span>`,
+      ),
+    )
+    .join("");
 }
 
 async function refreshApprovals() {
@@ -225,6 +251,27 @@ async function runAgent() {
   }
 }
 
+function connectEventStream() {
+  if (!window.EventSource) {
+    sseStatus.textContent = "polling";
+    return;
+  }
+
+  const source = new EventSource("/events/stream");
+  source.addEventListener("open", () => {
+    sseStatus.textContent = "live";
+  });
+  source.addEventListener("agent_event", () => {
+    getJson("/agents/status").then(renderAgents).catch(() => {});
+  });
+  source.addEventListener("observability", (event) => {
+    renderObservability(JSON.parse(event.data));
+  });
+  source.addEventListener("error", () => {
+    sseStatus.textContent = "reconnecting";
+  });
+}
+
 document.querySelectorAll(".tab").forEach((tab) => {
   tab.addEventListener("click", () => {
     document.querySelectorAll(".tab").forEach((item) => item.classList.remove("active"));
@@ -250,6 +297,10 @@ loadUsers().then(runAgent).catch(() => {
 loadHealth().catch(() => {
   ollama.textContent = "unknown";
 });
+getJson("/onboarding/flow").then(renderOnboarding).catch(() => {
+  onboardingFlow.innerHTML = card("onboarding unavailable", "admin flow did not load.");
+});
+connectEventStream();
 setInterval(() => {
   getJson("/agents/status").then(renderAgents).catch(() => {});
   loadHealth().catch(() => {});

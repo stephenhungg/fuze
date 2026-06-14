@@ -62,6 +62,8 @@ look for:
 - three tasks
 - blocked context present
 - agent stream events present
+- sse observability endpoint advertised
+- onboarding flow includes identity, docs, and agent activation
 
 ## identity proof
 
@@ -81,6 +83,16 @@ curl -fsS http://127.0.0.1:8000/identity/users
 ```bash
 curl -fsS http://127.0.0.1:8000/agents/status
 curl -fsS http://127.0.0.1:8000/agents/events
+curl -fsS http://127.0.0.1:8000/observability/summary
+curl -N http://127.0.0.1:8000/events/stream
+```
+
+stop the sse curl with `ctrl-c` after the first few events.
+
+## onboarding proof
+
+```bash
+curl -fsS http://127.0.0.1:8000/onboarding/flow
 ```
 
 ## vector memory proof

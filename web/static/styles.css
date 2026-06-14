@@ -147,7 +147,15 @@ button:disabled {
   margin-top: 14px;
 }
 
+.telemetry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
 .status-grid div,
+.telemetry-grid div,
 .readiness,
 .card {
   border: 1px solid var(--line);
@@ -160,9 +168,20 @@ button:disabled {
 }
 
 .status-grid span,
+.telemetry-grid span,
 .readiness span {
   display: block;
   font-size: 12px;
+}
+
+.telemetry-grid div {
+  min-width: 0;
+  padding: 9px;
+}
+
+.telemetry-grid strong {
+  display: block;
+  overflow-wrap: anywhere;
 }
 
 .stack {

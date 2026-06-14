@@ -15,6 +15,7 @@ gb10 hosts:
 - approvals
 - audit logs
 - dashboard event streams
+- sse observability dashboards
 
 ## nonprofit wedge
 
@@ -154,6 +155,9 @@ nontechnical onboarding should feel like:
 4. enable skills/agents
 5. watch the dashboard stream readiness, missing info, blocked context, tasks,
    approvals, and audit trails
+
+the implemented demo now exposes this as `GET /onboarding/flow`, plus
+observability through `GET /observability/summary` and `GET /events/stream`.
 
 ## current demo versus product-next
 

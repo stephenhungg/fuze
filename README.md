@@ -84,7 +84,8 @@ anderson foundation report workflow:
 
 - seeded nonprofit grant memory
 - demo identity adapter with active directory / entra-style group-to-role mapping
-- lightweight local agent mesh status and dashboard event stream
+- lightweight local agent mesh status, sse stream, and observability dashboard
+- onboarding flow for identity, role mapping, docs ingestion, and agent activation
 - local embeddings and qdrant vector memory seed/search
 - context packet retrieval
 - policy-filtered allowed and blocked context
@@ -101,6 +102,7 @@ see `docs/demo-runbook.md` for venue restart and smoke-test commands.
 see `docs/pitch.md` for the 5-minute judging talk track.
 see `docs/product-context.md` for the nonprofit onboarding, a2a-style agent
 mesh, and active directory / entra / ldap role-mapping direction.
+see `docs/onboarding-observability-research.md` for the researched setup flow.
 
 one-command verification:
 

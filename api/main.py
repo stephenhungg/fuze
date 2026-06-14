@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import json
 import os
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -11,11 +12,11 @@ from typing import Any, AsyncIterator
 
 import httpx
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import agent, events, identity, policy, retrieval, vector_memory
+from . import agent, events, identity, onboarding, policy, retrieval, vector_memory
 from .db import DEMO_GOAL, store
 
 
@@ -118,6 +119,28 @@ async def monitor_loop() -> None:
         await asyncio.sleep(monitor_state["interval_seconds"])
 
 
+def sse_frame(event: str, data: dict[str, Any], event_id: str | None = None) -> str:
+    lines = []
+    if event_id:
+        lines.append(f"id: {event_id}")
+    lines.append(f"event: {event}")
+    lines.append(f"data: {json.dumps(data, separators=(',', ':'))}")
+    return "\n".join(lines) + "\n\n"
+
+
+async def event_stream() -> AsyncIterator[str]:
+    sent_ids: set[str] = set()
+    while True:
+        status = events.agent_status()
+        for event in reversed(status["events"]):
+            if event["id"] in sent_ids:
+                continue
+            sent_ids.add(event["id"])
+            yield sse_frame("agent_event", event, event["id"])
+        yield sse_frame("observability", events.observability_summary())
+        await asyncio.sleep(2)
+
+
 @app.get("/")
 def index() -> FileResponse:
     return FileResponse(WEB_DIR / "index.html")
@@ -176,9 +199,24 @@ def agents_events() -> dict[str, Any]:
     return {"events": events.agent_status()["events"]}
 
 
+@app.get("/events/stream")
+async def events_stream() -> StreamingResponse:
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
+
+@app.get("/observability/summary")
+def observability_summary() -> dict[str, Any]:
+    return events.observability_summary()
+
+
 @app.get("/identity/users")
 def identity_users() -> dict[str, Any]:
     return {"users": identity.list_users(), "role_map": identity.GROUP_ROLE_MAP}
+
+
+@app.get("/onboarding/flow")
+def onboarding_flow() -> dict[str, Any]:
+    return onboarding.onboarding_status()
 
 
 @app.get("/graph")

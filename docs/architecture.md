@@ -68,9 +68,35 @@ implemented agent stream:
 
 - `GET /agents/status` returns registered logical agents and recent events
 - `GET /agents/events` returns the recent event stream
+- `GET /events/stream` streams those events to the dashboard over sse
+- `GET /observability/summary` returns dashboard counters and runtime stream
+  metadata
 - manual and always-on runs emit index, policy, workflow, approval, and audit
   events
 - the dashboard renders agent mesh status and recent handoffs
+
+## onboarding/admin flow
+
+implemented demo endpoint:
+
+- `GET /onboarding/flow` returns the recommended org setup path, identity
+  management model, and document ingestion model
+
+target setup flow:
+
+```text
+mission template
+-> identity connection
+-> group-to-role mapping
+-> document connectors
+-> local ingestion/classification
+-> agent activation
+-> observability + approvals + audit
+```
+
+fuze should use oidc/saml for login, scim 2.0 for user/group provisioning,
+graph delta/change notifications for microsoft 365 changes, ldap sync for
+legacy ad, and local policy mappings for fuze roles.
 
 ## a2a-style mesh
 
@@ -134,6 +160,9 @@ identity/role mapping, and agent mesh direction.
 - `GET /graph`
 - `GET /tasks`
 - `GET /audit`
+- `GET /observability/summary`
+- `GET /events/stream`
+- `GET /onboarding/flow`
 - `POST /tools/get_context`
 - `POST /tools/prepare_report`
 - `POST /tools/policy_check`

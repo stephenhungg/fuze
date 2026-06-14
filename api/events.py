@@ -92,6 +92,44 @@ def agent_status() -> dict[str, Any]:
     }
 
 
+def observability_summary() -> dict[str, Any]:
+    bootstrap()
+    recent_events = list(EVENTS)
+    event_types: dict[str, int] = {}
+    agent_counts: dict[str, int] = {}
+    for event in recent_events:
+        event_types[event["type"]] = event_types.get(event["type"], 0) + 1
+        agent_counts[event["agent_id"]] = agent_counts.get(event["agent_id"], 0) + 1
+
+    return {
+        "sse": {
+            "endpoint": "/events/stream",
+            "status": "ready",
+            "transport": "text/event-stream",
+        },
+        "events_buffered": len(recent_events),
+        "event_types": event_types,
+        "agent_counts": agent_counts,
+        "dashboards": [
+            {
+                "id": "agent-health",
+                "label": "agent health",
+                "signals": ["agent status", "event rate", "last event time"],
+            },
+            {
+                "id": "governance",
+                "label": "governance",
+                "signals": ["blocked context", "approval queue", "policy checks"],
+            },
+            {
+                "id": "runtime",
+                "label": "local runtime",
+                "signals": ["ollama", "qdrant", "cloud calls", "always-on monitor"],
+            },
+        ],
+    }
+
+
 def record_run(result: dict[str, Any], trigger: str) -> None:
     packet = result["context_packet"]
     audit = result["audit"]

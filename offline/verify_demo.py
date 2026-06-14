@@ -91,6 +91,16 @@ def main() -> int:
     assert_true("grant-readiness-agent" in agent_ids, "grant workflow agent is registered")
     assert_true(len(mesh["events"]) >= 1, "agent stream has events")
 
+    observability = request("/observability/summary")
+    assert_true(observability["sse"]["endpoint"] == "/events/stream", "sse observability endpoint is advertised")
+    assert_true(observability["events_buffered"] >= 1, "observability summary has buffered events")
+
+    onboarding = request("/onboarding/flow")
+    step_ids = {step["id"] for step in onboarding["flow"]}
+    assert_true("identity" in step_ids, "onboarding covers identity connection")
+    assert_true("connect-docs" in step_ids, "onboarding covers document ingestion setup")
+    assert_true("activate-agents" in step_ids, "onboarding covers agent activation")
+
     pitch = request("/demo/pitch")
     assert_true("local_first_always_on" in pitch["rubric_mapping"], "pitch maps local-first rubric")
     assert_true(pitch["demo_result"]["readiness_score"] == 72, "pitch packet matches demo readiness")
