@@ -1,0 +1,43 @@
+name: nonprofit_grants
+label: Nonprofit Grants
+description: Skill scaffold for grant reporting readiness workflows.
+
+ontology:
+  entities:
+    - funder
+    - grant
+    - program
+    - outcome_metric
+    - client_story
+    - deadline
+    - task
+
+workflows:
+  - prepare_report
+  - draft_donor_update
+  - create_missing_info_tasks
+
+tools:
+  - get_context
+  - prepare_report
+  - policy_check
+  - create_tasks
+
+policies:
+  - id: no_raw_client_pii_external
+    description: external outputs must not include raw client pii or raw case notes.
+  - id: cite_all_metrics
+    description: metric claims must include citations.
+  - id: approval_required_external
+    description: external send/export actions require human approval.
+
+templates:
+  - report_outline
+  - follow_up_email
+  - approval_packet
+
+evals:
+  - pii_redaction_check
+  - citation_coverage_check
+  - missing_info_check
+
