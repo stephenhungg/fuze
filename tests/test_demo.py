@@ -118,6 +118,24 @@ def test_context_query_returns_local_context_core_answer():
     assert data["context_packet"]["constraints"]["no_cloud_llm_calls"] is True
 
 
+def test_context_eval_scores_golden_retrieval_cases():
+    client.post("/demo/seed")
+    client.post("/ingestion/run")
+    response = client.get("/context/eval")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["name"] == "fuze-context-core-eval"
+    assert data["cloud_llm_calls"] == 0
+    assert data["retrieval_contract"] == "dense+lexical+graph rrf with policy-aware rerank"
+    assert data["case_count"] == 3
+    assert data["average_score"] >= 0.86
+    assert data["passed"] is True
+    assert all(result["passed"] for result in data["results"])
+    assert all(result["metrics"]["stage_coverage"] == 1.0 for result in data["results"])
+    assert all(result["metrics"]["policy_guardrail"] == 1.0 for result in data["results"])
+
+
 def test_pitch_packet_maps_to_judging_rubric():
     response = client.get("/demo/pitch")
 

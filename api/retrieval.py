@@ -89,7 +89,8 @@ def build_graph_traversal(question: str, vector_hits: list[dict[str, Any]], max_
     edges = graph["edges"]
     hit_chunks = {hit.get("chunk_id") for hit in vector_hits if hit.get("chunk_id")}
     hit_sources = {hit.get("source") for hit in vector_hits if hit.get("source")}
-    terms = terms_for(question)
+    question_terms = terms_for(question)
+    terms = set(question_terms)
     for hit in vector_hits:
         terms |= terms_for(" ".join(str(hit.get(key, "")) for key in ("chunk_id", "title", "source", "text_preview")))
 
@@ -97,7 +98,7 @@ def build_graph_traversal(question: str, vector_hits: list[dict[str, Any]], max_
     for node_id, node in nodes.items():
         node_terms = graph_terms(node)
         source_match = node.get("source") in hit_sources
-        score = len(terms & node_terms) + (3 if source_match else 0)
+        score = len(question_terms & node_terms) * 3 + len(terms & node_terms) + (3 if source_match else 0)
         if score:
             scored.append((score, node_id))
     scored.sort(key=lambda item: item[0], reverse=True)
@@ -476,4 +477,129 @@ async def query_context_core(
             "policy": "role and external-output filters before agent prompt assembly",
             "no_cloud_llm_calls": True,
         },
+    }
+
+
+EVAL_CASES = [
+    {
+        "id": "anderson-volunteer-gap",
+        "question": "what does anderson need and who owns missing volunteer hours?",
+        "role": "grant_manager",
+        "user_id": "morgan",
+        "external": True,
+        "expected_sources": ["grant_requirements.txt", "volunteers.csv"],
+        "expected_nodes": ["Grant Agreement", "Jordan"],
+        "expected_blocked_sources": ["volunteers.csv"],
+    },
+    {
+        "id": "case-note-governance",
+        "question": "can morgan use raw case notes in the funder report?",
+        "role": "grant_manager",
+        "user_id": "morgan",
+        "external": True,
+        "expected_sources": ["case_notes.txt"],
+        "expected_nodes": ["Sensitive Case Note"],
+        "expected_blocked_sources": ["case_notes.txt"],
+    },
+    {
+        "id": "budget-variance-proof",
+        "question": "why is the may food budget variance acceptable?",
+        "role": "grant_manager",
+        "user_id": "morgan",
+        "external": True,
+        "expected_sources": ["finance_export_may.csv"],
+        "expected_nodes": ["Budget Variance Notes"],
+        "expected_blocked_sources": [],
+    },
+]
+
+
+def source_set(packet: dict[str, Any]) -> set[str]:
+    sources = {item["source"] for item in packet["selected_context"]}
+    sources.update(item["source"] for item in packet["blocked_context"])
+    for hit in packet["vector_hits"]["hits"]:
+        if hit.get("source"):
+            sources.add(hit["source"])
+    for hit in packet["hybrid_retrieval"]["lexical_hits"]["hits"]:
+        if hit.get("source"):
+            sources.add(hit["source"])
+    for hit in packet["hybrid_retrieval"]["graph_hits"]:
+        if hit.get("source"):
+            sources.add(hit["source"])
+    return sources
+
+
+def recall(expected: list[str], observed: set[str]) -> float:
+    if not expected:
+        return 1.0
+    return len(set(expected) & observed) / len(set(expected))
+
+
+async def evaluate_context_core(limit: int = 8) -> dict[str, Any]:
+    results: list[dict[str, Any]] = []
+    for case in EVAL_CASES:
+        packet = await query_context_core(
+            question=case["question"],
+            role=case["role"],
+            user_id=case["user_id"],
+            external=case["external"],
+            limit=limit,
+        )
+        observed_sources = source_set(packet)
+        selected_sources = {item["source"] for item in packet["selected_context"]}
+        blocked_sources = {item["source"] for item in packet["blocked_context"]}
+        observed_nodes = {node["label"] for node in packet["graph_traversal"]["nodes"]}
+        expected_blocked = set(case["expected_blocked_sources"])
+        source_recall = recall(case["expected_sources"], observed_sources)
+        node_recall = recall(case["expected_nodes"], observed_nodes)
+        blocked_recall = recall(case["expected_blocked_sources"], blocked_sources)
+        stage_coverage = 1.0 if packet["hybrid_retrieval"]["rank_fusion"]["rankers"] == ["dense", "lexical", "graph"] else 0.0
+        rerank_ready = 1.0 if packet["hybrid_retrieval"]["reranked_hits"] else 0.0
+        policy_guardrail = 1.0 if not (expected_blocked & selected_sources) else 0.0
+        score = round(
+            source_recall * 0.32
+            + node_recall * 0.2
+            + blocked_recall * 0.18
+            + stage_coverage * 0.12
+            + rerank_ready * 0.08
+            + policy_guardrail * 0.1,
+            3,
+        )
+        results.append(
+            {
+                "id": case["id"],
+                "question": case["question"],
+                "score": score,
+                "passed": score >= 0.82,
+                "metrics": {
+                    "source_recall": round(source_recall, 3),
+                    "node_recall": round(node_recall, 3),
+                    "blocked_recall": round(blocked_recall, 3),
+                    "stage_coverage": stage_coverage,
+                    "rerank_ready": rerank_ready,
+                    "policy_guardrail": policy_guardrail,
+                },
+                "expected": {
+                    "sources": case["expected_sources"],
+                    "nodes": case["expected_nodes"],
+                    "blocked_sources": case["expected_blocked_sources"],
+                },
+                "observed": {
+                    "sources": sorted(observed_sources),
+                    "selected_sources": sorted(selected_sources),
+                    "blocked_sources": sorted(blocked_sources),
+                    "nodes": sorted(observed_nodes),
+                },
+            }
+        )
+
+    average_score = round(sum(item["score"] for item in results) / len(results), 3)
+    return {
+        "name": "fuze-context-core-eval",
+        "case_count": len(results),
+        "average_score": average_score,
+        "passed": all(item["passed"] for item in results) and average_score >= 0.86,
+        "cloud_llm_calls": 0,
+        "retrieval_contract": "dense+lexical+graph rrf with policy-aware rerank",
+        "results": results,
     }

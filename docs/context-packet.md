@@ -57,6 +57,7 @@ implemented query:
 
 ```text
 POST /context/query
+GET /context/eval
 ```
 
 the request carries `question`, `user_id`, `role`, `external`, and `limit`.
@@ -77,6 +78,12 @@ not each own their own index, graph traversal, or policy filters. the demo path
 is intentionally not naive top-k rag: dense retrieval, lexical retrieval, and
 graph expansion are fused with reciprocal rank fusion, then reranked with policy
 and source diversity before prompt assembly.
+
+`GET /context/eval` runs golden nonprofit retrieval cases against the same local
+context core. it scores source recall, graph-node recall, blocked-source recall,
+hybrid stage coverage, rerank readiness, and policy guardrails. this gives the
+demo a measurable answer to “is this better than basic rag?” without calling any
+cloud service.
 
 implemented demo proof:
 

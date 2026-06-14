@@ -248,6 +248,18 @@ function renderContextCore(result) {
   ].join("");
 }
 
+function renderContextEval(result) {
+  pitchProof.innerHTML += linesCard(
+    "retrieval eval",
+    [
+      `${result.case_count} golden case(s) · average ${Math.round(result.average_score * 100)}%`,
+      result.retrieval_contract,
+      result.passed ? "all cases passed" : "needs review",
+    ],
+    `<span class="tag">${escapeHtml(result.cloud_llm_calls)} cloud calls</span>`,
+  );
+}
+
 async function refreshApprovals() {
   const data = await getJson("/approvals");
   renderApprovals(data.approvals);
@@ -295,6 +307,7 @@ async function runAgent() {
       }),
     });
     const pitch = await getJson("/demo/pitch");
+    const evalResult = await getJson("/context/eval");
     const mesh = await getJson("/agents/status");
     render(result);
     renderIngestion(ingestion);
@@ -313,6 +326,7 @@ async function runAgent() {
       ],
       `<span class="tag">${escapeHtml(pitch.technical_proof[3])}</span>`,
     );
+    renderContextEval(evalResult);
   } finally {
     runBtn.disabled = false;
     runBtn.textContent = "run local agent";

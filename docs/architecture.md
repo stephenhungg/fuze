@@ -145,11 +145,17 @@ agent question
 implemented demo endpoint:
 
 - `POST /context/query`
+- `GET /context/eval`
 
 the response includes `server`, `vector_hits`, `hybrid_retrieval`,
 `graph_traversal`, `context_packet`, `selected_context`, `blocked_context`,
 `citations`, and `runtime`. this is the contract future workflow agents should
 use instead of querying raw files directly.
+
+`GET /context/eval` measures the local context core against golden nonprofit
+questions. the eval checks source recall, graph-node recall, blocked-source
+recall, hybrid stage coverage, rerank readiness, and policy guardrails while
+keeping cloud llm calls at zero.
 
 ## demo path
 
@@ -189,6 +195,7 @@ identity/role mapping, and agent mesh direction.
 - `GET /onboarding/flow`
 - `POST /tools/get_context`
 - `POST /context/query`
+- `GET /context/eval`
 - `POST /tools/prepare_report`
 - `POST /tools/policy_check`
 - `POST /tools/create_tasks`

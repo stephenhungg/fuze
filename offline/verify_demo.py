@@ -129,6 +129,12 @@ def main() -> int:
     assert_true(context_core["selected_context"], "context core returns selected context")
     assert_true(context_core["runtime"]["no_cloud_llm_calls"] is True, "context core runtime records zero cloud calls")
 
+    retrieval_eval = request("/context/eval")
+    assert_true(retrieval_eval["passed"] is True, "context eval passes golden retrieval cases")
+    assert_true(retrieval_eval["average_score"] >= 0.86, "context eval score clears readiness bar")
+    assert_true(retrieval_eval["cloud_llm_calls"] == 0, "context eval uses zero cloud calls")
+    assert_true(retrieval_eval["case_count"] == 3, "context eval covers three nonprofit questions")
+
     mesh = request("/agents/status")
     agent_ids = {agent["id"] for agent in mesh["agents"]}
     assert_true("index-agent" in agent_ids, "index agent is registered")

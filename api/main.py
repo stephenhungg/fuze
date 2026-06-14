@@ -302,6 +302,11 @@ async def context_query(request: ContextQueryRequest) -> dict[str, Any]:
     )
 
 
+@app.get("/context/eval")
+async def context_eval() -> dict[str, Any]:
+    return await retrieval.evaluate_context_core()
+
+
 @app.post("/tools/prepare_report")
 def prepare_report() -> dict[str, Any]:
     return agent.prepare_report()
