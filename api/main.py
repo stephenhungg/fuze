@@ -78,6 +78,16 @@ class VectorSearchRequest(BaseModel):
     limit: int = 5
 
 
+class ContextQueryRequest(BaseModel):
+    question: str = DEMO_GOAL
+    org_id: str = "harbor-light-nonprofit"
+    skill: str = "nonprofit_grants"
+    role: str = "grant_manager"
+    user_id: str | None = "morgan"
+    external: bool = True
+    limit: int = 8
+
+
 class ApprovalDecisionRequest(BaseModel):
     status: str
     actor: str = "alex"
@@ -277,6 +287,19 @@ def audit() -> dict[str, Any]:
 @app.post("/tools/get_context")
 def get_context(request: GoalRequest) -> dict[str, Any]:
     return retrieval.get_context(goal=request.goal, role=request.role, user_id=request.user_id, external=True)
+
+
+@app.post("/context/query")
+async def context_query(request: ContextQueryRequest) -> dict[str, Any]:
+    return await retrieval.query_context_core(
+        question=request.question,
+        org_id=request.org_id,
+        skill=request.skill,
+        role=request.role,
+        user_id=request.user_id,
+        external=request.external,
+        limit=request.limit,
+    )
 
 
 @app.post("/tools/prepare_report")

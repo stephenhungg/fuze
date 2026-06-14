@@ -82,6 +82,36 @@ def test_vector_search_endpoint_has_safe_fallback_shape():
     assert "embedding_source" in data
 
 
+def test_context_query_returns_local_context_core_answer():
+    client.post("/demo/seed")
+    client.post("/ingestion/run")
+    response = client.post(
+        "/context/query",
+        json={
+            "question": "what does anderson need and who owns the missing volunteer hours?",
+            "user_id": "morgan",
+            "role": "grant_manager",
+            "external": True,
+            "limit": 6,
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["server"]["name"] == "fuze-context-core"
+    assert data["server"]["style"] == "local-mcp"
+    assert data["server"]["cloud_llm_calls"] == 0
+    assert data["runtime"]["no_cloud_llm_calls"] is True
+    assert data["vector_hits"]["collection"] == "fuze_context"
+    assert data["vector_hits"]["hits"]
+    assert data["graph_traversal"]["ephemeral_agent"] == "context-graph-walker"
+    assert data["graph_traversal"]["nodes"]
+    assert data["selected_context"]
+    assert any(item["metadata"].get("derived_from") == "sample_data/harbor_light" for item in data["selected_context"])
+    assert any(item["source"] == "case_notes.txt" for item in data["blocked_context"])
+    assert data["context_packet"]["constraints"]["no_cloud_llm_calls"] is True
+
+
 def test_pitch_packet_maps_to_judging_rubric():
     response = client.get("/demo/pitch")
 

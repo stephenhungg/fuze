@@ -96,9 +96,25 @@ def main() -> int:
         {"query": "anderson foundation volunteer hours", "limit": 3},
     )
     assert_true(search["collection"] == "fuze_context", "vector search uses fuze_context")
-    if search["available"]:
-        hit_ids = [hit["chunk_id"] for hit in search["hits"]]
-        assert_true("grant-req-1" in hit_ids, "vector search finds grant requirements")
+    hit_sources = [hit["source"] for hit in search["hits"]]
+    assert_true("grant_requirements.txt" in hit_sources, "vector search finds grant requirements")
+
+    context_core = request(
+        "/context/query",
+        {
+            "question": "what does anderson need and who owns missing volunteer hours?",
+            "role": "grant_manager",
+            "user_id": "morgan",
+            "external": True,
+            "limit": 6,
+        },
+    )
+    assert_true(context_core["server"]["name"] == "fuze-context-core", "context core endpoint is active")
+    assert_true(context_core["server"]["cloud_llm_calls"] == 0, "context core stays local")
+    assert_true(context_core["vector_hits"]["hits"], "context core returns vector hits")
+    assert_true(context_core["graph_traversal"]["nodes"], "context core traverses graph nodes")
+    assert_true(context_core["selected_context"], "context core returns selected context")
+    assert_true(context_core["runtime"]["no_cloud_llm_calls"] is True, "context core runtime records zero cloud calls")
 
     mesh = request("/agents/status")
     agent_ids = {agent["id"] for agent in mesh["agents"]}

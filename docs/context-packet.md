@@ -48,6 +48,31 @@ cn=board -> board_viewer
 the same raw memory can produce different packets depending on the requester and
 the target output.
 
+## local context core
+
+the production retrieval path should be a local mcp-style context server, not
+ad hoc file search inside each workflow agent.
+
+implemented query:
+
+```text
+POST /context/query
+```
+
+the request carries `question`, `user_id`, `role`, `external`, and `limit`.
+the response contains:
+
+- `server`: local context-core identity and zero cloud calls
+- `vector_hits`: qdrant hits or deterministic lexical fallback
+- `graph_traversal`: ephemeral graph-walker seeds, nodes, edges, and path
+- `context_packet`: the role-aware packet used by agents
+- `selected_context`: the allowed evidence selected for the current question
+- `blocked_context`: redacted policy-blocked evidence with reasons
+- `runtime`: retrieval stack proof for audit and demo
+
+this is the “ask the organization” layer. agents query it for context; they do
+not each own their own index, graph traversal, or policy filters.
+
 implemented demo proof:
 
 - `morgan` belongs to `cn=grant-team` and maps to `grant_manager`

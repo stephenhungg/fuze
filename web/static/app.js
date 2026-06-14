@@ -13,6 +13,7 @@ const identityCard = document.querySelector("#identity-card");
 const orgProfile = document.querySelector("#org-profile");
 const ingestionStatus = document.querySelector("#ingestion-status");
 const vectorMemory = document.querySelector("#vector-memory");
+const contextCore = document.querySelector("#context-core");
 const pitchProof = document.querySelector("#pitch-proof");
 const agentMesh = document.querySelector("#agent-mesh");
 const agentStream = document.querySelector("#agent-stream");
@@ -227,6 +228,22 @@ function renderIngestion(result) {
   );
 }
 
+function renderContextCore(result) {
+  const sources = result.selected_context.map((item) => item.source);
+  const path = result.graph_traversal.path.slice(0, 6).join(" -> ");
+  contextCore.innerHTML = [
+    linesCard(
+      result.server.name,
+      [
+        `${result.server.style} · cloud calls ${result.server.cloud_llm_calls}`,
+        `${result.vector_hits.hits.length} vector hit(s) · ${result.graph_traversal.nodes.length} graph node(s)`,
+        path,
+      ],
+      `<span class="tag">${escapeHtml(sources.join(", ") || "policy-filtered")}</span>`,
+    ),
+  ].join("");
+}
+
 async function refreshApprovals() {
   const data = await getJson("/approvals");
   renderApprovals(data.approvals);
@@ -263,10 +280,21 @@ async function runAgent() {
       method: "POST",
       body: JSON.stringify({ query: goalInput.value, limit: 3 }),
     });
+    const context = await getJson("/context/query", {
+      method: "POST",
+      body: JSON.stringify({
+        question: goalInput.value,
+        role: selectedRole,
+        user_id: selectedUser,
+        external: true,
+        limit: 6,
+      }),
+    });
     const pitch = await getJson("/demo/pitch");
     const mesh = await getJson("/agents/status");
     render(result);
     renderIngestion(ingestion);
+    renderContextCore(context);
     renderAgents(mesh);
     vectorMemory.innerHTML = linesCard(
       seed.vector_seed.available ? "qdrant seeded" : "qdrant fallback",
