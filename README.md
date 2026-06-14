@@ -91,3 +91,9 @@ cloud llm calls.
 
 see `docs/demo-runbook.md` for venue restart and smoke-test commands.
 see `docs/pitch.md` for the 5-minute judging talk track.
+
+one-command verification:
+
+```bash
+./offline/verify_demo.sh http://promaxgb10-5d0c:8000
+```
