@@ -98,7 +98,8 @@ async def seed() -> dict[str, Any]:
                 f"{QDRANT_URL}/collections/{COLLECTION}",
                 json={"vectors": {"size": VECTOR_SIZE, "distance": "Cosine"}},
             )
-            create.raise_for_status()
+            if create.status_code != 409:
+                create.raise_for_status()
             upsert = await client.put(
                 f"{QDRANT_URL}/collections/{COLLECTION}/points",
                 json={"points": points},
