@@ -4,167 +4,328 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>fuze</title>
-    <link rel="stylesheet" href="/static/styles.css" />
+    <link rel="stylesheet" href="/static/styles.css?v=linear-admin-sharp" />
   </head>
   <body>
-    <main class="app-shell">
-      <aside class="panel rail-panel">
-        <div class="brand">
-          <span class="mark">fz</span>
+    <header class="site-nav">
+      <a class="brand-link" href="/" data-route="/">
+        <span class="mark">fz</span>
+        <span>fuze</span>
+      </a>
+      <nav aria-label="primary">
+        <a href="/" data-route="/">Overview</a>
+        <a href="/auth" data-route="/auth">Auth</a>
+        <a href="/onboarding" data-route="/onboarding">Onboarding</a>
+        <a href="/admin/login" data-route="/admin/login">Admin</a>
+        <a href="/app" data-route="/app">Workspace</a>
+      </nav>
+    </header>
+
+    <main>
+      <section id="landing-route" class="route-view landing-route" data-route-view="/">
+        <div class="landing-hero">
           <div>
-            <h1>fuze</h1>
-            <p>local agent workspace</p>
+            <span class="section-kicker">Local-first agent operations</span>
+            <h1>fuze runs nonprofit workflows without sending private context to cloud LLMs.</h1>
+            <p>
+              Connect identity, ingest documents, keep a local context core warm, and let always-on agents surface work that staff can actually approve.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="/auth" data-route="/auth">Start with auth</a>
+              <a class="button" href="/app" data-route="/app">Open demo workspace</a>
+            </div>
+          </div>
+          <div class="landing-proof" aria-label="demo proof">
+            <div><span>Cloud LLM calls</span><strong>0</strong></div>
+            <div><span>Readiness</span><strong>72%</strong></div>
+            <div><span>Policy blocks</span><strong>36</strong></div>
           </div>
         </div>
 
-        <div class="rail-section">
-          <span class="section-kicker">mission</span>
-          <strong>anderson foundation report</strong>
-          <p>grant readiness, policy checks, and approval routing.</p>
+        <div class="landing-grid">
+          <article>
+            <span>1</span>
+            <strong>Identity first</strong>
+            <p>Users enter through SSO-style auth, group mapping, and role-aware permissions before any context is returned.</p>
+          </article>
+          <article>
+            <span>2</span>
+            <strong>Local context core</strong>
+            <p>Documents become graph-linked memory with dense, lexical, and traversal signals fused before prompt assembly.</p>
+          </article>
+          <article>
+            <span>3</span>
+            <strong>Human approval gates</strong>
+            <p>Agents can run continuously, but exports, sensitive stories, and funder-facing drafts wait for the right role.</p>
+          </article>
         </div>
-
-        <textarea id="goal">get us ready for the anderson foundation report</textarea>
-
-        <label for="user-select">identity</label>
-        <select id="user-select"></select>
-        <button id="run-btn" type="button">run local agent</button>
-
-        <div class="status-grid">
-          <div>
-            <span>mode</span>
-            <strong>local-first</strong>
-          </div>
-          <div>
-            <span>cloud llm calls</span>
-            <strong id="cloud-calls">0</strong>
-          </div>
-          <div>
-            <span>skill</span>
-            <strong id="skill">not run</strong>
-          </div>
-          <div>
-            <span>ollama</span>
-            <strong id="ollama">checking</strong>
-          </div>
-          <div>
-            <span>qdrant</span>
-            <strong id="qdrant">checking</strong>
-          </div>
-          <div>
-            <span>always-on</span>
-            <strong id="always-on">starting</strong>
-          </div>
-          <div>
-            <span>role</span>
-            <strong id="role">grant_manager</strong>
-          </div>
-          <div>
-            <span>identity</span>
-            <strong id="identity">demo-adapter</strong>
-          </div>
-        </div>
-      </aside>
-
-      <section class="panel thread-panel">
-        <header class="topbar">
-          <div>
-            <span class="section-kicker">mission thread</span>
-            <h2>get us ready for the anderson foundation report</h2>
-            <p>what staff needs to do, what fuze found, and what must be approved.</p>
-          </div>
-          <div class="topbar-status">
-            <span id="confidence" class="pill">idle</span>
-            <span class="pill">cloud <strong data-cloud-calls>0</strong></span>
-          </div>
-        </header>
-
-        <section class="staff-brief" aria-label="staff dashboard">
-          <div class="brief-head">
-            <span>staff dashboard</span>
-            <strong id="brief-status">checking</strong>
-          </div>
-          <div id="staff-brief" class="brief-grid"></div>
-        </section>
-
-        <section class="readiness">
-          <div>
-            <span>readiness</span>
-            <strong id="score">--%</strong>
-          </div>
-          <progress id="score-bar" max="100" value="0"></progress>
-        </section>
-
-        <div class="tabs">
-          <button class="tab active" data-tab="tasks" type="button">tasks</button>
-          <button class="tab" data-tab="drafts" type="button">drafts</button>
-          <button class="tab" data-tab="approvals" type="button">approvals</button>
-          <button class="tab" data-tab="audit" type="button">audit</button>
-        </div>
-
-        <div id="tasks" class="tab-panel active"></div>
-        <div id="drafts" class="tab-panel"></div>
-        <div id="approvals" class="tab-panel"></div>
-        <div id="audit" class="tab-panel"></div>
-
-        <h2>agent stream</h2>
-        <div class="telemetry-grid">
-          <div>
-            <span>sse</span>
-            <strong id="sse-status">connecting</strong>
-          </div>
-          <div>
-            <span>events</span>
-            <strong id="event-count">0</strong>
-          </div>
-          <div>
-            <span>policy</span>
-            <strong id="policy-count">0</strong>
-          </div>
-          <div>
-            <span>approvals</span>
-            <strong id="approval-count">0</strong>
-          </div>
-        </div>
-        <div id="agent-stream" class="stack timeline"></div>
       </section>
 
-      <aside class="panel inspector-panel">
-        <div class="inspector-head">
-          <span class="section-kicker">inspector</span>
-          <strong>local context core</strong>
+      <section id="auth-route" class="route-view auth-route" data-route-view="/auth">
+        <div class="auth-panel">
+          <div>
+            <span class="section-kicker">Auth</span>
+            <h1>Sign in to Harbor Light</h1>
+            <p>Demo SSO maps your directory groups to fuze roles before the workspace loads.</p>
+          </div>
+          <form id="auth-form" class="auth-form">
+            <label for="auth-provider">Identity provider</label>
+            <select id="auth-provider">
+              <option>Microsoft Entra ID</option>
+              <option>Okta</option>
+              <option>Google Workspace</option>
+            </select>
+            <label for="auth-user">Demo user</label>
+            <select id="auth-user">
+              <option value="morgan">Morgan · Grant manager</option>
+              <option value="alex">Alex · Executive director</option>
+              <option value="casey">Casey · Case manager</option>
+            </select>
+            <button type="submit">Continue to workspace</button>
+          </form>
         </div>
+        <div class="auth-side">
+          <h2>Access model</h2>
+          <div class="route-list">
+            <div><strong>SSO</strong><p>OIDC or SAML session from the nonprofit directory.</p></div>
+            <div><strong>SCIM</strong><p>Directory groups sync into fuze without editing AD membership.</p></div>
+            <div><strong>Policy</strong><p>Role, source, sensitivity, and output destination filter context.</p></div>
+          </div>
+        </div>
+      </section>
 
-        <h2>context core</h2>
-        <div id="context-core" class="stack"></div>
+      <section id="admin-login-route" class="route-view auth-route" data-route-view="/admin/login">
+        <div class="auth-panel">
+          <div>
+            <span class="section-kicker">Admin login</span>
+            <h1>Manage the local appliance.</h1>
+            <p>Admins control directory sync, role mappings, document connectors, agent runtime, and audit evidence.</p>
+          </div>
+          <form id="admin-auth-form" class="auth-form">
+            <label for="admin-user">Admin identity</label>
+            <select id="admin-user">
+              <option value="alex">Alex · Executive director</option>
+              <option value="morgan">Morgan · Grant manager</option>
+            </select>
+            <label for="admin-scope">Session scope</label>
+            <select id="admin-scope">
+              <option>Workspace administrator</option>
+              <option>Identity administrator</option>
+              <option>Audit viewer</option>
+            </select>
+            <button type="submit">Open admin dashboard</button>
+          </form>
+        </div>
+        <div class="auth-side">
+          <h2>Admin surfaces</h2>
+          <div class="route-list">
+            <div><strong>Directory</strong><p>Sync status, mapped groups, role previews, and membership evidence.</p></div>
+            <div><strong>Connectors</strong><p>Document sources, ingestion health, restricted folders, and change detection.</p></div>
+            <div><strong>Runtime</strong><p>Always-on agents, SSE observability, approvals, and local model health.</p></div>
+          </div>
+        </div>
+      </section>
 
-        <h2>memory traversal</h2>
-        <div id="graph" class="graph"></div>
+      <section id="admin-route" class="route-view admin-route" data-route-view="/admin">
+        <aside class="admin-sidebar">
+          <div class="brand">
+            <span class="mark">fz</span>
+            <div><h1>fuze admin</h1><p>Harbor Light workspace</p></div>
+          </div>
+          <nav aria-label="admin">
+            <a href="#admin-overview">Overview</a>
+            <a href="#admin-members">Members</a>
+            <a href="#admin-groups">Groups</a>
+            <a href="#admin-connectors">Connectors</a>
+            <a href="#admin-agents">Agents</a>
+            <a href="#admin-audit">Audit</a>
+          </nav>
+        </aside>
+        <section class="admin-main">
+          <header class="admin-header">
+            <div>
+              <span class="section-kicker">Admin dashboard</span>
+              <h1>Workspace control plane</h1>
+            </div>
+            <a class="button primary" href="/app" data-route="/app">Open workspace</a>
+          </header>
 
-        <h2>blocked context</h2>
-        <div id="blocked" class="stack"></div>
+          <div id="admin-overview" class="admin-metrics">
+            <div><span>Directory</span><strong>Synced</strong><p>SCIM source active</p></div>
+            <div><span>Members</span><strong>6</strong><p>4 role groups mapped</p></div>
+            <div><span>Connectors</span><strong>4</strong><p>1 restricted source</p></div>
+            <div><span>Cloud calls</span><strong>0</strong><p>Local runtime enforced</p></div>
+          </div>
 
-        <h2>directory management</h2>
-        <div id="directory-management" class="stack"></div>
+          <section id="admin-members" class="admin-section">
+            <div class="section-row"><h2>Members</h2><p>Role and access preview before context is assembled.</p></div>
+            <table>
+              <thead><tr><th>User</th><th>Title</th><th>Role</th><th>Groups</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Morgan Patel</td><td>Grant manager</td><td>grant_manager</td><td>cn=grant-team</td><td>Active</td></tr>
+                <tr><td>Alex Rivera</td><td>Executive director</td><td>executive_director</td><td>cn=executive</td><td>Active</td></tr>
+                <tr><td>Casey Nguyen</td><td>Case manager</td><td>case_manager</td><td>cn=case-management</td><td>Restricted context</td></tr>
+              </tbody>
+            </table>
+          </section>
 
-        <h2>context packet</h2>
-        <div id="identity-card" class="stack"></div>
-        <div id="org-profile" class="stack"></div>
-        <div id="context-list" class="stack"></div>
+          <section id="admin-groups" class="admin-section">
+            <div class="section-row"><h2>Group mappings</h2><p>Directory remains source of truth; fuze maps groups to permissions.</p></div>
+            <table>
+              <thead><tr><th>Directory group</th><th>Mapped role</th><th>Allowed context</th><th>External output</th></tr></thead>
+              <tbody>
+                <tr><td>executive leadership</td><td>executive_director</td><td>All approved context</td><td>Can approve</td></tr>
+                <tr><td>grant team</td><td>grant_manager</td><td>Grant, metrics, approved stories</td><td>Draft only</td></tr>
+                <tr><td>case management</td><td>case_manager</td><td>Restricted case folders</td><td>Blocked by default</td></tr>
+              </tbody>
+            </table>
+          </section>
 
-        <h2>runtime memory</h2>
-        <div id="ingestion-status" class="stack"></div>
-        <div id="vector-memory" class="stack"></div>
+          <section id="admin-connectors" class="admin-section">
+            <div class="section-row"><h2>Connectors</h2><p>Watched sources feed local retrieval and graph memory.</p></div>
+            <table>
+              <thead><tr><th>Source</th><th>Status</th><th>Chunks</th><th>Policy</th></tr></thead>
+              <tbody>
+                <tr><td>Microsoft 365 SharePoint</td><td>Connected</td><td>25</td><td>Standard</td></tr>
+                <tr><td>Google Drive</td><td>Connected</td><td>17</td><td>Standard</td></tr>
+                <tr><td>Secure case folder</td><td>Restricted</td><td>18</td><td>PII blocked</td></tr>
+                <tr><td>Donor CRM export</td><td>Watching</td><td>4</td><td>Internal only</td></tr>
+              </tbody>
+            </table>
+          </section>
 
-        <h2>pitch proof</h2>
-        <div id="pitch-proof" class="stack"></div>
+          <section id="admin-agents" class="admin-section">
+            <div class="section-row"><h2>Agents</h2><p>Always-on jobs stream observable events and wait at approval gates.</p></div>
+            <table>
+              <thead><tr><th>Agent</th><th>Kind</th><th>Status</th><th>Responsibility</th></tr></thead>
+              <tbody>
+                <tr><td>Index agent</td><td>Memory</td><td>Watching</td><td>Refresh chunks and graph nodes</td></tr>
+                <tr><td>Policy agent</td><td>Governance</td><td>Ready</td><td>Block sensitive context</td></tr>
+                <tr><td>Grant readiness agent</td><td>Workflow</td><td>Running</td><td>Create tasks, drafts, approvals</td></tr>
+              </tbody>
+            </table>
+          </section>
 
-        <h2>agent mesh</h2>
-        <div id="agent-mesh" class="stack"></div>
+          <section id="admin-audit" class="admin-section">
+            <div class="section-row"><h2>Audit</h2><p>Demo proof for judges and enterprise buyers.</p></div>
+            <table>
+              <thead><tr><th>Evidence</th><th>Value</th><th>Why it matters</th></tr></thead>
+              <tbody>
+                <tr><td>Cloud LLM calls</td><td>0</td><td>Local-first requirement</td></tr>
+                <tr><td>Retrieval eval</td><td>100%</td><td>Golden nonprofit cases pass</td></tr>
+                <tr><td>Blocked context</td><td>36</td><td>PII and role policy applied</td></tr>
+              </tbody>
+            </table>
+          </section>
+        </section>
+      </section>
 
-        <h2>onboarding</h2>
-        <div id="onboarding-flow" class="stack"></div>
-      </aside>
+      <section id="onboarding-route" class="route-view onboarding-route" data-route-view="/onboarding">
+        <div class="route-heading">
+          <span class="section-kicker">Onboarding</span>
+          <h1>Go from empty box to usable agent workspace.</h1>
+          <p>Set identity, connect docs, review policy, seed memory, then activate the always-on agent loop.</p>
+        </div>
+        <div class="onboarding-board">
+          <article><span>01</span><strong>Connect identity</strong><p>Choose Entra, Okta, or Google Workspace. Map groups to roles and preview access for each user.</p></article>
+          <article><span>02</span><strong>Ingest documents</strong><p>Bring in SharePoint, Drive, CRM exports, and restricted folders. PII is tagged before retrieval.</p></article>
+          <article><span>03</span><strong>Build context graph</strong><p>Create local embeddings, lexical indexes, and org graph edges for funders, staff, programs, and policies.</p></article>
+          <article><span>04</span><strong>Turn agents on</strong><p>Start the always-on monitor and stream agent events into the workspace observability panel.</p></article>
+        </div>
+        <a class="button primary" href="/app" data-route="/app">Open configured workspace</a>
+      </section>
+
+      <section id="app-route" class="route-view app-route" data-route-view="/app">
+        <div class="app-shell">
+          <aside class="panel rail-panel">
+            <div class="brand">
+              <span class="mark">fz</span>
+              <div><h1>fuze</h1><p>Local agent workspace</p></div>
+            </div>
+
+            <div class="rail-section">
+              <span class="section-kicker">Mission</span>
+              <strong>Anderson Foundation report</strong>
+              <p>Grant readiness, policy checks, and approval routing.</p>
+            </div>
+
+            <textarea id="goal">get us ready for the anderson foundation report</textarea>
+            <label for="user-select">Identity</label>
+            <select id="user-select"></select>
+            <button id="run-btn" type="button">Run local agent</button>
+
+            <div class="status-grid">
+              <div><span>Mode</span><strong>local-first</strong></div>
+              <div><span>Cloud LLM calls</span><strong id="cloud-calls">0</strong></div>
+              <div><span>Skill</span><strong id="skill">not run</strong></div>
+              <div><span>Ollama</span><strong id="ollama">checking</strong></div>
+              <div><span>Qdrant</span><strong id="qdrant">checking</strong></div>
+              <div><span>Always-on</span><strong id="always-on">starting</strong></div>
+              <div><span>Role</span><strong id="role">grant_manager</strong></div>
+              <div><span>Identity</span><strong id="identity">demo-adapter</strong></div>
+            </div>
+          </aside>
+
+          <section class="panel thread-panel">
+            <header class="topbar">
+              <div>
+                <span class="section-kicker">Mission thread</span>
+                <h2>Get us ready for the Anderson Foundation report</h2>
+                <p>What staff needs to do, what fuze found, and what must be approved.</p>
+              </div>
+              <div class="topbar-status">
+                <span id="confidence" class="pill">idle</span>
+                <span class="pill">Cloud <strong data-cloud-calls>0</strong></span>
+              </div>
+            </header>
+
+            <section class="staff-brief" aria-label="staff dashboard">
+              <div class="brief-head"><span>Staff dashboard</span><strong id="brief-status">checking</strong></div>
+              <div id="staff-brief" class="brief-grid"></div>
+            </section>
+
+            <section class="readiness">
+              <div><span>Readiness</span><strong id="score">--%</strong></div>
+              <progress id="score-bar" max="100" value="0"></progress>
+            </section>
+
+            <div class="tabs">
+              <button class="tab active" data-tab="tasks" type="button">Tasks</button>
+              <button class="tab" data-tab="drafts" type="button">Drafts</button>
+              <button class="tab" data-tab="approvals" type="button">Approvals</button>
+              <button class="tab" data-tab="audit" type="button">Audit</button>
+            </div>
+
+            <div id="tasks" class="tab-panel active"></div>
+            <div id="drafts" class="tab-panel"></div>
+            <div id="approvals" class="tab-panel"></div>
+            <div id="audit" class="tab-panel"></div>
+
+            <h2>Agent stream</h2>
+            <div class="telemetry-grid">
+              <div><span>SSE</span><strong id="sse-status">connecting</strong></div>
+              <div><span>Events</span><strong id="event-count">0</strong></div>
+              <div><span>Policy</span><strong id="policy-count">0</strong></div>
+              <div><span>Approvals</span><strong id="approval-count">0</strong></div>
+            </div>
+            <div id="agent-stream" class="stack timeline"></div>
+          </section>
+
+          <aside class="panel inspector-panel">
+            <div class="inspector-head"><span class="section-kicker">Inspector</span><strong>Local context core</strong></div>
+            <h2>Context core</h2><div id="context-core" class="stack"></div>
+            <h2>Memory traversal</h2><div id="graph" class="graph"></div>
+            <h2>Blocked context</h2><div id="blocked" class="stack"></div>
+            <h2>Directory management</h2><div id="directory-management" class="stack"></div>
+            <h2>Context packet</h2><div id="identity-card" class="stack"></div><div id="org-profile" class="stack"></div><div id="context-list" class="stack"></div>
+            <h2>Runtime memory</h2><div id="ingestion-status" class="stack"></div><div id="vector-memory" class="stack"></div>
+            <h2>Pitch proof</h2><div id="pitch-proof" class="stack"></div>
+            <h2>Agent mesh</h2><div id="agent-mesh" class="stack"></div>
+            <h2>Onboarding</h2><div id="onboarding-flow" class="stack"></div>
+          </aside>
+        </div>
+      </section>
     </main>
-    <script src="/static/app.js"></script>
+    <script src="/static/app.js?v=linear-admin-sharp"></script>
   </body>
 </html>

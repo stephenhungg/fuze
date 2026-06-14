@@ -166,6 +166,15 @@ def index() -> FileResponse:
     return FileResponse(WEB_DIR / "index.html")
 
 
+@app.get("/auth")
+@app.get("/admin/login")
+@app.get("/admin")
+@app.get("/onboarding")
+@app.get("/app")
+def spa_route() -> FileResponse:
+    return FileResponse(WEB_DIR / "index.html")
+
+
 @app.get("/health")
 async def health() -> dict[str, Any]:
     return {

@@ -1,5 +1,12 @@
 {
   "buildCommand": null,
   "installCommand": null,
-  "outputDirectory": "."
+  "outputDirectory": ".",
+  "rewrites": [
+    { "source": "/auth", "destination": "/" },
+    { "source": "/admin/login", "destination": "/" },
+    { "source": "/admin", "destination": "/" },
+    { "source": "/onboarding", "destination": "/" },
+    { "source": "/app", "destination": "/" }
+  ]
 }

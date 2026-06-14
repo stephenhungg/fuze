@@ -34,24 +34,35 @@ const tasksPanel = document.querySelector("#tasks");
 const draftsPanel = document.querySelector("#drafts");
 const approvalsPanel = document.querySelector("#approvals");
 const auditPanel = document.querySelector("#audit");
+const routeViews = document.querySelectorAll("[data-route-view]");
+const routeLinks = document.querySelectorAll("[data-route]");
+const authForm = document.querySelector("#auth-form");
+const authUser = document.querySelector("#auth-user");
+const adminAuthForm = document.querySelector("#admin-auth-form");
+const adminUser = document.querySelector("#admin-user");
 let previewMode = false;
 
 function card(title, body, extra = "") {
-  return `<article class="card"><strong>${escapeHtml(title)}</strong><p>${escapeHtml(body)}</p>${extra}</article>`;
+  return `<article class="card"><strong>${escapeHtml(sentenceCase(title))}</strong><p>${escapeHtml(body)}</p>${extra}</article>`;
 }
 
 function linesCard(title, lines, extra = "") {
-  return `<article class="card"><strong>${escapeHtml(title)}</strong>${lines
+  return `<article class="card"><strong>${escapeHtml(sentenceCase(title))}</strong>${lines
     .map((line) => `<p>${escapeHtml(line)}</p>`)
     .join("")}${extra}</article>`;
 }
 
 function briefCard(label, value, detail, tone = "") {
   return `<article class="brief-card ${escapeHtml(tone)}">
-    <span>${escapeHtml(label)}</span>
+    <span>${escapeHtml(sentenceCase(label))}</span>
     <strong>${escapeHtml(value)}</strong>
     <p>${escapeHtml(detail)}</p>
   </article>`;
+}
+
+function sentenceCase(value) {
+  const text = String(value);
+  return text ? `${text[0].toUpperCase()}${text.slice(1)}` : text;
 }
 
 function escapeHtml(value) {
@@ -76,6 +87,32 @@ async function getJson(url, options = {}) {
   });
   if (!response.ok) throw new Error(`${response.status} ${response.statusText}`);
   return response.json();
+}
+
+function normalizeRoute(pathname) {
+  if (pathname === "/auth" || pathname === "/onboarding" || pathname === "/app" || pathname === "/admin/login" || pathname === "/admin") return pathname;
+  return "/";
+}
+
+function renderRoute(pathname = window.location.pathname) {
+  const route = normalizeRoute(pathname);
+  routeViews.forEach((view) => {
+    view.classList.toggle("active", view.dataset.routeView === route);
+  });
+  routeLinks.forEach((link) => {
+    const linkRoute = normalizeRoute(new URL(link.href).pathname);
+    link.classList.toggle("active", linkRoute === route || (route === "/admin" && linkRoute === "/admin/login"));
+  });
+  document.body.dataset.currentRoute = route.slice(1) || "landing";
+  window.scrollTo({ top: 0, left: 0 });
+}
+
+function navigateTo(pathname) {
+  const route = normalizeRoute(pathname);
+  if (window.location.pathname !== route) {
+    window.history.pushState({}, "", route);
+  }
+  renderRoute(route);
 }
 
 const previewUsers = [
@@ -281,9 +318,9 @@ function renderPreview() {
   renderContextCore(previewContextCore);
   renderDirectory(previewDirectory, previewAccess);
   renderAgents(previewMesh);
-  vectorMemory.innerHTML = linesCard("qdrant preview", ["64 ingested chunks", "nomic-embed-text on gb10"], `<span class="tag">grant_requirements.txt, volunteers.csv</span>`);
+  vectorMemory.innerHTML = linesCard("Qdrant preview", ["64 ingested chunks", "nomic-embed-text on gb10"], `<span class="tag">grant_requirements.txt, volunteers.csv</span>`);
   pitchProof.innerHTML = linesCard(
-    "rubric fit",
+    "Rubric fit",
     ["local-first: gb10 service, local ollama, qdrant, always-on monitor, cloud calls 0", "business value: grant readiness workflow for nonprofit teams"],
     `<span class="tag">frontend preview; live api runs on gb10</span>`,
   );
@@ -307,7 +344,7 @@ async function loadUsers() {
         `<option value="${escapeHtml(user.id)}" data-role="${escapeHtml(user.role)}">${escapeHtml(user.name)} · ${escapeHtml(user.role)}</option>`,
     )
     .join("");
-  userSelect.value = "morgan";
+  userSelect.value = localStorage.getItem("fuze-user") || "morgan";
 }
 
 function render(result) {
@@ -319,25 +356,25 @@ function render(result) {
   confidence.textContent = packet.confidence;
   renderStaffBrief(result);
 
-  identityCard.innerHTML = linesCard("identity adapter", [
+  identityCard.innerHTML = linesCard("Identity adapter", [
     `${packet.user.name} · ${packet.user.title}`,
     `role: ${packet.role}`,
     `groups: ${packet.groups.join(", ")}`,
   ]);
 
   orgProfile.innerHTML = [
-    linesCard("org profile", [
+    linesCard("Org profile", [
       packet.org_profile.name,
       `${packet.org_profile.staff_count} staff · ${packet.org_profile.volunteer_count} volunteers · ${packet.org_profile.active_grants} active grants`,
       packet.org_profile.risk_posture,
     ]),
     linesCard(
-      "systems connected",
+      "Systems connected",
       packet.connectors.map((connector) => `${connector.label}: ${connector.status}`),
       `<span class="tag">${escapeHtml(packet.connectors.length)} connectors</span>`,
     ),
     linesCard(
-      "operating metrics",
+      "Operating metrics",
       packet.metrics.map((metric) => `${metric.label}: ${metric.value ?? "missing"} · ${metric.status}`),
       `<span class="tag">${escapeHtml(packet.metrics.length)} metrics</span>`,
     ),
@@ -377,12 +414,12 @@ function render(result) {
   renderApprovals(result.approvals);
 
   auditPanel.innerHTML = [
-    card("goal", result.audit.goal),
-    card("identity", `${result.audit.user.name} · ${result.audit.role}; groups: ${result.audit.groups.join(", ")}`),
-    card("graph path", result.audit.graph_path_traversed.join(" -> ")),
-    card("sources used", result.audit.sources_used.join(", ")),
-    card("blocked context", result.audit.context_blocked.map((item) => `${item.id}: ${item.reasons.join("/")}`).join("; ")),
-    card("runtime", `${result.audit.model_runtime.provider}; cloud calls: ${result.audit.model_runtime.cloud_calls}`),
+    card("Goal", result.audit.goal),
+    card("Identity", `${result.audit.user.name} · ${result.audit.role}; groups: ${result.audit.groups.join(", ")}`),
+    card("Graph path", result.audit.graph_path_traversed.join(" -> ")),
+    card("Sources used", result.audit.sources_used.join(", ")),
+    card("Blocked context", result.audit.context_blocked.map((item) => `${item.id}: ${item.reasons.join("/")}`).join("; ")),
+    card("Runtime", `${result.audit.model_runtime.provider}; cloud calls: ${result.audit.model_runtime.cloud_calls}`),
   ].join("");
 }
 
@@ -393,19 +430,19 @@ function renderStaffBrief(result) {
   const blockedCount = packet.blocked_context.length;
   const nextTask = result.tasks[0];
   const missing = packet.missing_info[0];
-  briefStatus.textContent = pendingApprovals ? "needs review" : "on track";
+  briefStatus.textContent = pendingApprovals ? "Needs review" : "On track";
   staffBrief.innerHTML = [
-    briefCard("report readiness", `${packet.readiness_score}%`, "good enough to draft, still waiting on one key update", "ready"),
-    briefCard("needs attention", `${urgentTasks} urgent task${urgentTasks === 1 ? "" : "s"}`, nextTask ? `${nextTask.owner}: ${nextTask.title}` : "no urgent tasks right now", "attention"),
-    briefCard("waiting on", missing.owner, missing.impact, "waiting"),
-    briefCard("approval queue", `${pendingApprovals} item${pendingApprovals === 1 ? "" : "s"}`, pendingApprovals ? "review before anything leaves the org" : "nothing waiting on leadership", "approval"),
-    briefCard("safe sharing", `${blockedCount} blocked`, "sensitive notes stay inside fuze unless policy allows them", "safe"),
+    briefCard("Report readiness", `${packet.readiness_score}%`, "Good enough to draft, still waiting on one key update", "ready"),
+    briefCard("Needs attention", `${urgentTasks} urgent task${urgentTasks === 1 ? "" : "s"}`, nextTask ? `${nextTask.owner}: ${sentenceCase(nextTask.title)}` : "No urgent tasks right now", "attention"),
+    briefCard("Waiting on", missing.owner, sentenceCase(missing.impact), "waiting"),
+    briefCard("Approval queue", `${pendingApprovals} item${pendingApprovals === 1 ? "" : "s"}`, pendingApprovals ? "Review before anything leaves the org" : "Nothing waiting on leadership", "approval"),
+    briefCard("Safe sharing", `${blockedCount} blocked`, "Sensitive notes stay inside fuze unless policy allows them", "safe"),
   ].join("");
 }
 
 function renderApprovals(approvals) {
   if (!approvals.length) {
-    approvalsPanel.innerHTML = card("no approval gates", "nothing is waiting on a human right now.");
+    approvalsPanel.innerHTML = card("No approval gates", "Nothing is waiting on a human right now.");
     return;
   }
 
@@ -414,13 +451,13 @@ function renderApprovals(approvals) {
       const closed = approval.status !== "pending";
       const tagClass = closed ? approval.status : "";
       const decision = closed
-        ? `<span class="tag ${escapeHtml(tagClass)}">${escapeHtml(approval.status)} by ${escapeHtml(approval.decided_by)}</span>`
-        : `<span class="tag">pending · ${escapeHtml(approval.owner_role)}</span>`;
+        ? `<span class="tag ${escapeHtml(tagClass)}">${escapeHtml(sentenceCase(approval.status))} by ${escapeHtml(approval.decided_by)}</span>`
+        : `<span class="tag">Pending · ${escapeHtml(approval.owner_role)}</span>`;
       const actions = closed
         ? ""
         : `<div class="approval-actions">
-            <button type="button" data-approval="${escapeHtml(approval.id)}" data-decision="approved">approve</button>
-            <button type="button" data-approval="${escapeHtml(approval.id)}" data-decision="rejected">reject</button>
+            <button type="button" data-approval="${escapeHtml(approval.id)}" data-decision="approved">Approve</button>
+            <button type="button" data-approval="${escapeHtml(approval.id)}" data-decision="rejected">Reject</button>
           </div>`;
       return card(
         approval.title,
@@ -467,13 +504,13 @@ function renderDirectory(data, preview) {
     .map((group) => `${group.display_name}: ${group.mapped_role}`)
     .slice(0, 6);
   directoryManagement.innerHTML = [
-    linesCard("directory source", [
+    linesCard("Directory source", [
       data.source.source,
       `${data.source.login} login · ${data.source.provisioning} provisioning`,
       `last sync: ${data.source.last_sync}`,
     ]),
-    linesCard("group role mappings", mappedGroups, `<span class="tag">${escapeHtml(data.groups.length)} groups</span>`),
-    linesCard("access preview", [
+    linesCard("Group role mappings", mappedGroups, `<span class="tag">${escapeHtml(data.groups.length)} groups</span>`),
+    linesCard("Access preview", [
       `${preview.user.name} · ${preview.user.role}`,
       `${preview.allowed_count} allowed · ${preview.blocked_count} blocked for external output`,
       preview.decision,
@@ -483,7 +520,7 @@ function renderDirectory(data, preview) {
 
 function renderIngestion(result) {
   ingestionStatus.innerHTML = linesCard(
-    "sample ingestion",
+    "Sample ingestion",
     [
       `${result.files_seen} files · ${result.chunks_created} chunks`,
       `${result.pii_chunks} pii chunk(s) · ${result.restricted_files.length} restricted/non-exportable files`,
@@ -517,7 +554,7 @@ function renderContextCore(result) {
 
 function renderContextEval(result) {
   pitchProof.innerHTML += linesCard(
-    "retrieval eval",
+    "Retrieval eval",
     [
       `${result.case_count} golden case(s) · average ${Math.round(result.average_score * 100)}%`,
       result.retrieval_contract,
@@ -549,7 +586,7 @@ async function decideApproval(id, status, button) {
 
 async function runAgent() {
   runBtn.disabled = true;
-  runBtn.textContent = "running locally...";
+  runBtn.textContent = "Running locally...";
   try {
     const selectedUser = userSelect.value || "morgan";
     const selectedRole = userSelect.selectedOptions[0]?.dataset.role || "grant_manager";
@@ -585,12 +622,12 @@ async function runAgent() {
     renderDirectory(directory, accessPreview);
     renderAgents(mesh);
     vectorMemory.innerHTML = linesCard(
-      seed.vector_seed.available ? "qdrant seeded" : "qdrant fallback",
+      seed.vector_seed.available ? "Qdrant seeded" : "Qdrant fallback",
       [`${seed.vector_seed.points || 0} points`, seed.vector_seed.embedding_source || vector.embedding_source],
       `<span class="tag">${escapeHtml(vector.hits.map((hit) => hit.chunk_id).join(", ") || "fallback context")}</span>`,
     );
     pitchProof.innerHTML = linesCard(
-      "rubric fit",
+      "Rubric fit",
       [
         `local-first: ${pitch.rubric_mapping.local_first_always_on}`,
         `business value: ${pitch.rubric_mapping.business_value}`,
@@ -603,7 +640,7 @@ async function runAgent() {
     sseStatus.textContent = "preview";
   } finally {
     runBtn.disabled = false;
-    runBtn.textContent = "run local agent";
+    runBtn.textContent = "Run local agent";
   }
 }
 
@@ -637,8 +674,42 @@ document.querySelectorAll(".tab").forEach((tab) => {
   });
 });
 
+routeLinks.forEach((link) => {
+  link.addEventListener("click", (event) => {
+    const url = new URL(link.href);
+    if (url.origin !== window.location.origin) return;
+    event.preventDefault();
+    navigateTo(url.pathname);
+  });
+});
+
+window.addEventListener("popstate", () => {
+  renderRoute();
+});
+
+authForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const selectedUser = authUser?.value || "morgan";
+  localStorage.setItem("fuze-user", selectedUser);
+  if (userSelect.options.length) {
+    userSelect.value = selectedUser;
+  }
+  navigateTo("/app");
+  runAgent();
+});
+
+adminAuthForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const selectedUser = adminUser?.value || "alex";
+  localStorage.setItem("fuze-admin-user", selectedUser);
+  navigateTo("/admin");
+});
+
 runBtn.addEventListener("click", runAgent);
-userSelect.addEventListener("change", runAgent);
+userSelect.addEventListener("change", () => {
+  localStorage.setItem("fuze-user", userSelect.value);
+  runAgent();
+});
 approvalsPanel.addEventListener("click", (event) => {
   const button = event.target.closest("[data-approval][data-decision]");
   if (!button) return;
@@ -646,6 +717,7 @@ approvalsPanel.addEventListener("click", (event) => {
     button.disabled = false;
   });
 });
+renderRoute();
 loadUsers().then(runAgent).catch(() => {
   renderPreview();
 });
@@ -653,7 +725,7 @@ loadHealth().catch(() => {
   renderPreview();
 });
 getJson("/onboarding/flow").then(renderOnboarding).catch(() => {
-  onboardingFlow.innerHTML = card("onboarding unavailable", "admin flow did not load.");
+  onboardingFlow.innerHTML = card("Onboarding unavailable", "Admin flow did not load.");
 });
 Promise.all([getJson("/identity/directory"), getJson("/identity/access-preview/morgan")])
   .then(([directory, preview]) => renderDirectory(directory, preview))
