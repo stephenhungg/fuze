@@ -109,7 +109,7 @@ async function runAgent() {
     render(result);
     vectorMemory.innerHTML = card(
       seed.vector_seed.available ? "qdrant seeded" : "qdrant fallback",
-      `${seed.vector_seed.points || 0} points · ${seed.vector_seed.embedding_source || vector.embedding_source}`,
+      `${seed.vector_seed.points || 0} points\n${seed.vector_seed.embedding_source || vector.embedding_source}`,
       `<span class="tag">${escapeHtml(vector.hits.map((hit) => hit.chunk_id).join(", ") || "fallback context")}</span>`,
     );
   } finally {
