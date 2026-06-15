@@ -134,12 +134,28 @@ def answer_goal(
     approvals: list[dict[str, Any]],
     report: dict[str, Any],
 ) -> str:
-    question = goal.lower()
+    question = goal.lower().strip()
     sources = ", ".join(context["citations"][:3])
     missing = context.get("missing_info", [])
     missing_line = ""
     if missing:
         missing_line = f"the main gap is {missing[0]['label']}, owned by {missing[0]['owner']}."
+
+    if question in {"hi", "hello", "hey", "yo", "sup"}:
+        return (
+            "hey — i’m here.\n\n"
+            "ask me something concrete like:\n"
+            "- what do we need for the anderson report?\n"
+            "- who owns the missing volunteer hours?\n"
+            "- draft the jordan follow-up\n"
+            "- what sensitive context is blocked?"
+        )
+
+    if question in {"what", "why", "how", "help"} or len(question.split()) <= 1:
+        return (
+            "i need a little more direction.\n\n"
+            "try asking about a report, owner, deadline, donor update, approval, blocked context, or a document source."
+        )
 
     if "anderson" in question and any(term in question for term in ["need", "required", "report", "ready", "missing"]):
         requirements = [
@@ -192,6 +208,13 @@ def answer_goal(
     )
 
 
+def response_kind(goal: str) -> str:
+    question = goal.lower().strip()
+    if question in {"hi", "hello", "hey", "yo", "sup", "what", "why", "how", "help"} or len(question.split()) <= 1:
+        return "clarifying"
+    return "workflow"
+
+
 def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str | None = None) -> dict[str, Any]:
     context = retrieval.get_context(goal=goal, role=role, user_id=user_id, external=True)
     tasks = create_tasks()
@@ -240,6 +263,7 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str |
         "status": "ready_for_review",
         "goal": goal,
         "response": answer_goal(goal, context, tasks, approvals, report),
+        "response_kind": response_kind(goal),
         "context_packet": context,
         "tasks": tasks,
         "approvals": approvals,

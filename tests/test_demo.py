@@ -76,6 +76,50 @@ def test_agent_audit_exposes_local_inference_probe_state():
     assert "cloud_calls" not in probe or probe["cloud_calls"] == 0
 
 
+def test_agent_chat_handles_greetings_and_vague_prompts_without_fake_readiness_answer():
+    greeting = client.post("/agent/run", json={"goal": "Hi", "role": "grant_manager", "user_id": "morgan"})
+    assert greeting.status_code == 200
+    greeting_data = greeting.json()
+    assert greeting_data["response_kind"] == "clarifying"
+    assert "ask me something concrete" in greeting_data["response"]
+    assert "72% ready" not in greeting_data["response"]
+
+    vague = client.post("/agent/run", json={"goal": "What", "role": "grant_manager", "user_id": "morgan"})
+    assert vague.status_code == 200
+    vague_data = vague.json()
+    assert vague_data["response_kind"] == "clarifying"
+    assert "more direction" in vague_data["response"]
+    assert "may volunteer hours" not in vague_data["response"]
+
+
+def test_chat_endpoint_is_single_turn_chat_contract():
+    response = client.post(
+        "/chat",
+        json={
+            "message": "Hi",
+            "role": "grant_manager",
+            "user_id": "morgan",
+            "thread_id": "thread-test",
+            "history": [{"role": "assistant", "text": "hello"}],
+        },
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["thread_id"] == "thread-test"
+    assert data["history_count"] == 1
+    assert data["chat_runtime"]["backend"] == "/chat"
+    assert data["response_kind"] == "clarifying"
+    assert "ask me something concrete" in data["response"]
+
+    report = client.post(
+        "/chat",
+        json={"message": "what do we need for the anderson report?", "role": "grant_manager", "user_id": "morgan"},
+    )
+    assert report.status_code == 200
+    assert "- required:" in report.json()["response"]
+
+
 def test_system_runtime_is_honest_about_gb10_boundary():
     response = client.get("/system/runtime")
 

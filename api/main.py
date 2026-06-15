@@ -77,6 +77,14 @@ class GoalRequest(BaseModel):
     user_id: str | None = "morgan"
 
 
+class ChatRequest(BaseModel):
+    message: str
+    role: str = "grant_manager"
+    user_id: str | None = "morgan"
+    thread_id: str | None = None
+    history: list[dict[str, Any]] = []
+
+
 class PolicyRequest(BaseModel):
     text: str
     citations: list[str] = []
@@ -296,6 +304,26 @@ async def run_agent(request: GoalRequest) -> dict[str, Any]:
     result = agent.run_agent(goal=request.goal, role=request.role, user_id=request.user_id)
     events.record_run(result, trigger="manual")
     return result
+
+
+@app.post("/chat")
+async def chat(request: ChatRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/chat", body(request), timeout=120)
+    await ensure_demo_memory()
+    result = agent.run_agent(goal=request.message, role=request.role, user_id=request.user_id)
+    events.record_run(result, trigger="chat")
+    return {
+        **result,
+        "thread_id": request.thread_id,
+        "message": request.message,
+        "history_count": len(request.history),
+        "chat_runtime": {
+            "mode": "single chat turn",
+            "backend": "/chat",
+            "cloud_llm_calls": 0,
+        },
+    }
 
 
 @app.get("/demo/pitch")

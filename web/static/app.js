@@ -990,61 +990,31 @@ async function runAgent() {
   try {
     const selectedUser = userSelect.value || "morgan";
     const selectedRole = userSelect.selectedOptions[0]?.dataset.role || "grant_manager";
-    const seed = await getJson("/demo/seed", { method: "POST" });
-    const ingestion = await getJson("/ingestion/run", { method: "POST" });
-    const result = await getJson("/agent/run", {
-      method: "POST",
-      body: JSON.stringify({ goal, role: selectedRole, user_id: selectedUser }),
-    });
-    const vector = await getJson("/tools/vector_search", {
-      method: "POST",
-      body: JSON.stringify({ query: goal, limit: 3 }),
-    });
-    const context = await getJson("/context/query", {
+    const history = (threadById(targetThreadId)?.messages || []).slice(-8);
+    const result = await getJson("/chat", {
       method: "POST",
       body: JSON.stringify({
-        question: goal,
+        message: goal,
         role: selectedRole,
         user_id: selectedUser,
-        external: true,
-        limit: 6,
+        thread_id: targetThreadId,
+        history,
       }),
     });
-    const pitch = await getJson("/demo/pitch");
-    const evalResult = await getJson("/context/eval");
-    const directory = await getJson("/identity/directory");
-    const accessPreview = await getJson(`/identity/access-preview/${encodeURIComponent(selectedUser)}`);
     const mesh = await getJson("/agents/status");
     previewMode = false;
     render(result, { updateChat: false });
     const updatedThread = threadById(targetThreadId);
     if (updatedThread) {
       updatedThread.messages = updatedThread.messages.filter((message) => message.text !== "routing to the gb10 agent runtime...");
-      updatedThread.status = `${result.context_packet.readiness_score}% ready`;
+      updatedThread.status = result.response_kind === "clarifying" ? "Needs prompt" : `${result.context_packet.readiness_score}% ready`;
     }
     pushMessageToThread(targetThreadId, "assistant", "fuze", assistantReplyFromResult(result));
     renderThreadList();
     if (activeThreadId === targetThreadId) {
       renderActiveThread();
     }
-    renderIngestion(ingestion);
-    renderContextCore(context);
-    renderDirectory(directory, accessPreview);
     renderAgents(mesh);
-    vectorMemory.innerHTML = linesCard(
-      seed.vector_seed.available ? "Qdrant seeded" : "Qdrant fallback",
-      [`${seed.vector_seed.points || 0} points`, seed.vector_seed.embedding_source || vector.embedding_source],
-      `<span class="tag">${escapeHtml(vector.hits.map((hit) => hit.chunk_id).join(", ") || "fallback context")}</span>`,
-    );
-    pitchProof.innerHTML = linesCard(
-      "Rubric fit",
-      [
-        `local-first: ${pitch.rubric_mapping.local_first_always_on}`,
-        `business value: ${pitch.rubric_mapping.business_value}`,
-      ],
-      `<span class="tag">${escapeHtml(pitch.technical_proof[3])}</span>`,
-    );
-    renderContextEval(evalResult);
   } catch (error) {
     const failedThread = threadById(targetThreadId);
     if (failedThread) {
@@ -1127,6 +1097,11 @@ adminAuthForm?.addEventListener("submit", (event) => {
 });
 
 chatForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  runAgent();
+});
+goalInput?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" || event.shiftKey) return;
   event.preventDefault();
   runAgent();
 });
