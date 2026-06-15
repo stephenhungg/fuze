@@ -9,9 +9,10 @@
 5. skill layer
 6. retrieval/context layer
 7. a2a-style agent mesh
-8. policy/governance layer
-9. approval and audit layer
-10. dashboard/event stream layer
+8. personal agent runtime layer
+9. policy/governance layer
+10. approval and audit layer
+11. dashboard/event stream layer
 
 ## deployment shape
 
@@ -30,6 +31,10 @@ shared inference + qdrant + graph memory + audit
 
 logical agents share one local inference runtime. fuze should not load a
 separate large model for each agent.
+
+personal employee agents share the same runtime. the per-user unit is a scoped
+home, bash env, mcp registry, skills, cron, memory, logs, and worker state. it
+is not a separate qwen process.
 
 ## identity model
 
@@ -81,6 +86,12 @@ implemented agent stream:
 - manual and always-on runs emit index, policy, workflow, approval, and audit
   events
 - the dashboard renders agent mesh status and recent handoffs
+- `GET /personal-agents` exposes per-employee agent homes, bash env, mcp
+  servers, web-search policy, skills, cron entries, quotas, audit policy, and
+  shared-service bindings
+- `POST /personal-agents/provision` records a provisioning event for an employee
+  agent and returns the folder/env/mcp/cron/worker actions the gb10 supervisor
+  would apply
 
 ## onboarding/admin flow
 
@@ -98,6 +109,7 @@ mission template
 -> document connectors
 -> local ingestion/classification
 -> agent activation
+-> personal agent provisioning
 -> observability + approvals + audit
 ```
 
@@ -116,6 +128,7 @@ target agents:
 - approval agent
 - audit agent
 - dashboard agent
+- personal agent supervisor
 
 workflow agents request context packets from memory/index agents. policy agents
 filter context before drafts or actions are produced. approval and audit agents
@@ -204,6 +217,10 @@ identity/role mapping, and agent mesh direction.
 - `POST /identity/sync`
 - `POST /identity/group-role-map`
 - `GET /identity/access-preview/{user_id}`
+- `GET /personal-agents`
+- `GET /personal-agents/{user_id}`
+- `POST /personal-agents/provision`
+- `POST /personal-agents/{user_id}/heartbeat`
 - `POST /tools/get_context`
 - `POST /context/query`
 - `GET /context/eval`

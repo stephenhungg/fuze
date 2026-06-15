@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import agent, events, identity, ingest, onboarding, policy, retrieval, runtime, vector_memory
+from . import agent, events, identity, ingest, onboarding, personal_agents, policy, retrieval, runtime, vector_memory
 from .db import DEMO_GOAL, store
 
 
@@ -112,6 +112,11 @@ class ApprovalDecisionRequest(BaseModel):
     status: str
     actor: str = "alex"
     note: str = ""
+
+
+class PersonalAgentProvisionRequest(BaseModel):
+    user_id: str = "morgan"
+    actor: str = "admin"
 
 
 def body(model: BaseModel) -> dict[str, Any]:
@@ -302,6 +307,47 @@ async def agents_status() -> dict[str, Any]:
     if runtime.configured():
         return await proxy_runtime("GET", "/agents/status")
     return events.agent_status()
+
+
+@app.get("/personal-agents")
+async def personal_agents_index() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/personal-agents")
+    return personal_agents.list_personal_agents()
+
+
+@app.get("/personal-agents/{user_id}")
+async def personal_agent_detail(user_id: str) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", f"/personal-agents/{user_id}")
+    agent_config = personal_agents.get_personal_agent(user_id)
+    if agent_config is None:
+        raise HTTPException(status_code=404, detail="personal agent not found")
+    return agent_config
+
+
+@app.post("/personal-agents/provision")
+async def personal_agent_provision(request: PersonalAgentProvisionRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/personal-agents/provision", body(request))
+    try:
+        result = personal_agents.provision_personal_agent(user_id=request.user_id, actor=request.actor)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    events.record_personal_agent_provision(result)
+    return result
+
+
+@app.post("/personal-agents/{user_id}/heartbeat")
+async def personal_agent_heartbeat(user_id: str) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", f"/personal-agents/{user_id}/heartbeat")
+    try:
+        result = personal_agents.heartbeat(user_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    events.record_personal_agent_heartbeat(result)
+    return result
 
 
 @app.get("/agents/events")

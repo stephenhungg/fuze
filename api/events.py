@@ -6,6 +6,8 @@ from collections import deque
 from datetime import datetime, timezone
 from typing import Any
 
+from . import personal_agents
+
 
 AGENTS = [
     {
@@ -50,6 +52,13 @@ AGENTS = [
         "status": "recording",
         "description": "records model runtime, context, blocked evidence, actions, and approvals.",
     },
+    {
+        "id": "personal-agent-supervisor",
+        "label": "Personal Agent Supervisor",
+        "kind": "runtime",
+        "status": "ready",
+        "description": "provisions employee agent homes, bash envs, mcp tools, skills, cron, and heartbeats.",
+    },
 ]
 
 EVENTS: deque[dict[str, Any]] = deque(maxlen=80)
@@ -84,8 +93,18 @@ def bootstrap() -> None:
 
 def agent_status() -> dict[str, Any]:
     bootstrap()
+    personal = personal_agents.list_personal_agents()
     return {
         "agents": AGENTS,
+        "personal_agents": {
+            "count": personal["count"],
+            "root": personal["root"],
+            "provisioned": len([agent for agent in personal["agents"] if agent["status"] == "provisioned"]),
+            "planned": len([agent for agent in personal["agents"] if agent["status"] == "planned"]),
+            "skills": sorted({skill["id"] for agent in personal["agents"] for skill in agent["skills"]}),
+            "mcp_servers": sorted({server["id"] for agent in personal["agents"] for server in agent["mcp_servers"]}),
+            "ram_strategy": personal["ram_strategy"],
+        },
         "events": list(EVENTS)[:12],
         "event_count": len(EVENTS),
         "transport": "local in-process a2a-style messages",
@@ -228,4 +247,37 @@ def record_role_mapping(result: dict[str, Any]) -> None:
             "previous_role": result["previous_role"],
             "role": result["role"],
         },
+    )
+
+
+def record_personal_agent_provision(result: dict[str, Any]) -> None:
+    agent = result["agent"]
+    emit(
+        "personal-agent-supervisor",
+        "provision",
+        f"provisioned {agent['id']} for {agent['user']['name']} with bash, mcp, cron, skills, and scoped workspace",
+        {
+            "actor": result["actor"],
+            "user_id": agent["user"]["id"],
+            "role": agent["user"]["role"],
+            "paths": agent["paths"],
+            "mcp_servers": [server["id"] for server in agent["mcp_servers"]],
+            "skills": [skill["id"] for skill in agent["skills"]],
+        },
+    )
+    emit(
+        "audit-agent",
+        "audit",
+        f"recorded personal agent provisioning for {agent['id']}",
+        {"agent_id": agent["id"], "cloud_calls": 0},
+    )
+
+
+def record_personal_agent_heartbeat(result: dict[str, Any]) -> None:
+    agent = result["agent"]
+    emit(
+        "personal-agent-supervisor",
+        "heartbeat",
+        f"{agent['id']} heartbeat alive",
+        {"agent_id": agent["id"], "last_heartbeat": result["last_heartbeat"]},
     )

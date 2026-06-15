@@ -378,7 +378,17 @@ const previewMesh = {
     { label: "Index Agent", kind: "memory", status: "watching", description: "keeps local docs, qdrant, and graph memory fresh." },
     { label: "Policy Agent", kind: "governance", status: "ready", description: "blocks pii and role-restricted context." },
     { label: "Grant Readiness Agent", kind: "workflow", status: "running", description: "turns private context into tasks, drafts, and approvals." },
+    { label: "Personal Agent Supervisor", kind: "runtime", status: "ready", description: "provisions employee bash envs, mcp tools, skills, cron, and heartbeats." },
   ],
+  personal_agents: {
+    count: 6,
+    provisioned: 0,
+    planned: 6,
+    root: "/var/lib/fuze/agents",
+    mcp_servers: ["fuze-bash", "fuze-context-core", "fuze-web-search", "fuze-approvals"],
+    skills: ["nonprofit_grants", "donor_updates", "volunteer_ops", "compliance_packet"],
+    ram_strategy: "many lightweight personal workers share the same loaded local models",
+  },
   events: [
     { agent_id: "index-agent", type: "preview", message: "preview mode is showing the last known demo state", created_at: "static" },
   ],
@@ -592,9 +602,23 @@ function renderApprovals(approvals) {
 }
 
 function renderAgents(mesh) {
+  const personal = mesh.personal_agents;
+  const personalCard = personal
+    ? linesCard(
+        "Personal agents",
+        [
+          `${personal.provisioned || 0} provisioned · ${personal.planned || 0} planned · ${personal.count || 0} total`,
+          `root: ${personal.root}`,
+          `mcp: ${(personal.mcp_servers || []).slice(0, 5).join(", ")}`,
+          `skills: ${(personal.skills || []).slice(0, 5).join(", ")}`,
+          personal.ram_strategy,
+        ],
+        `<span class="tag">bash · mcp · web search · cron</span>`,
+      )
+    : "";
   agentMesh.innerHTML = mesh.agents
     .map((agent) => linesCard(agent.label, [`${agent.kind} · ${agent.status}`, agent.description]))
-    .join("");
+    .join("") + personalCard;
   agentStream.innerHTML = mesh.events
     .slice(0, 8)
     .map((event) => card(`${event.agent_id} · ${event.type}`, event.message, `<span class="tag">${escapeHtml(event.created_at)}</span>`))

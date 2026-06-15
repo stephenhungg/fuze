@@ -1,5 +1,17 @@
 # todo
 
+- [x] add personal agent runtime control-plane model
+- [x] expose personal agent provisioning/status api endpoints
+- [x] wire personal agents into onboarding, agent mesh, docs, and ui
+- [ ] test locally, push, update gb10, and verify production proxy
+
+## personal agent runtime
+
+- each employee gets a lightweight agent home, not a dedicated model process.
+- personal agents share the dell-hosted ollama/qdrant/context-core services.
+- the runtime contract must include bash env, workspace folders, mcp/tool registry, web search policy, cron/heartbeat, skills, quotas, audit, and rbac.
+- local verification: `python3 -m pytest -q` passes with 27 tests.
+
 - [x] audit current production-to-dell security posture
 - [x] document hipaa/soc2 readiness gaps and secure connectivity plan
 - [x] patch misleading gb10 production copy

@@ -9,6 +9,8 @@ configure agents on their own laptops. they use a browser dashboard while the
 gb10 hosts:
 
 - long-running workflow agents
+- personal employee agents with bash envs, scoped workspaces, mcp tools, skills,
+  cron, memory, and heartbeats
 - shared local inference
 - vector and graph memory
 - policy enforcement
@@ -59,10 +61,17 @@ one vector memory service
 one graph/structured memory service
 one policy/audit layer
 many lightweight logical agents
+many lightweight personal employee workers
 ```
 
 logical agents are async workers/state machines that call the shared model
 runtime only when needed.
+
+the same applies to personal agents. onboarding should create an employee agent
+home and worker contract, not another model server. each worker can run bash,
+query local mcp servers, use public web search under policy, maintain scoped
+memory, and run scheduled skills while sharing the dell's loaded qwen and
+embedding models.
 
 ## a2a-style agent mesh
 
@@ -78,6 +87,8 @@ core agents:
 - approval agent: routes high-risk actions to humans
 - audit agent: records context, policy checks, model/runtime, actions, and approvals
 - dashboard agent: streams status and events to the ui
+- personal agent supervisor: provisions employee homes, env, mcp tools, skills,
+  cron, and heartbeat state
 
 example handoff:
 
@@ -153,7 +164,8 @@ nontechnical onboarding should feel like:
 2. connect folders, exports, google drive, crm dumps, or shared drives
 3. map users/groups to roles
 4. enable skills/agents
-5. watch the dashboard stream readiness, missing info, blocked context, tasks,
+5. provision personal agents for staff
+6. watch the dashboard stream readiness, missing info, blocked context, tasks,
    approvals, and audit trails
 
 the implemented demo now exposes this as `GET /onboarding/flow`, plus
@@ -170,6 +182,8 @@ implemented now:
 - demo identity adapter with active directory / entra-style group-to-role mapping
 - dashboard identity switcher for role-aware context packets
 - lightweight local agent mesh status and event stream
+- personal agent control-plane contract with bash env, mcp, web search policy,
+  role skills, cron, and heartbeat endpoints
 - policy-filtered context packet
 - tasks, drafts, approval queue, approval decisions, audit trail
 - always-on monitor
@@ -183,5 +197,7 @@ product-next:
 - connector onboarding
 - event bus for agent-to-agent messages
 - long-running index/policy/workflow/audit agents
+- real supervised personal agent workers with sandboxing, durable queues, and
+  systemd/cron integration
 - dashboard stream timeline
 - persistent approval policies with notification routing

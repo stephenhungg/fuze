@@ -327,6 +327,9 @@ def test_agent_mesh_status_and_events():
     assert "grant-readiness-agent" in agent_ids
     assert data["events"]
     assert data["transport"] == "local in-process a2a-style messages"
+    assert data["personal_agents"]["count"] >= 5
+    assert "fuze-context-core" in data["personal_agents"]["mcp_servers"]
+    assert "fuze-web-search" in data["personal_agents"]["mcp_servers"]
 
 
 def test_observability_summary_and_sse_stream_shape():
@@ -354,10 +357,58 @@ def test_onboarding_flow_covers_identity_docs_and_agents():
     assert response.status_code == 200
     data = response.json()
     step_ids = {step["id"] for step in data["flow"]}
-    assert {"identity", "role-map", "connect-docs", "ingest", "activate-agents"}.issubset(step_ids)
+    assert {"identity", "role-map", "connect-docs", "ingest", "activate-agents", "provision-personal-agents"}.issubset(step_ids)
     assert "scim 2.0" in data["identity_management"]["provisioning"]
     assert "microsoft graph delta queries" in data["identity_management"]["directory_sync"]
     assert "graph webhooks/change notifications" in data["doc_ingestion"]["change_detection"]
+    assert "mcp tools" in " ".join(data["personal_agent_runtime"]["provisioning"])
+    assert data["personal_agent_runtime"]["home_root"] == "/var/lib/fuze/agents"
+
+
+def test_personal_agents_expose_bash_mcp_web_search_cron_and_skills():
+    response = client.get("/personal-agents")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["cloud_llm_calls"] == 0
+    assert data["ram_strategy"].startswith("many lightweight")
+    morgan = next(agent for agent in data["agents"] if agent["user"]["id"] == "morgan")
+    assert morgan["paths"]["workspace"] == "/var/lib/fuze/agents/morgan/workspace"
+    assert morgan["bash_env"]["SHELL"] == "/bin/bash"
+    assert morgan["bash_env"]["FUZE_AGENT_ID"] == "personal-agent-morgan"
+    assert morgan["bash_env"]["FUZE_CONTEXT_CORE_URL"].endswith("/context/query")
+    assert morgan["bash_env"]["NO_CLOUD_LLM_CALLS"] == "1"
+    mcp_ids = {server["id"] for server in morgan["mcp_servers"]}
+    assert {"fuze-context-core", "fuze-bash", "fuze-web-search", "fuze-approvals"}.issubset(mcp_ids)
+    web_search = next(server for server in morgan["mcp_servers"] if server["id"] == "fuze-web-search")
+    assert "never send restricted org context" in web_search["policy"]
+    cron_ids = {entry["id"] for entry in morgan["cron"]}
+    assert {"heartbeat", "memory-refresh", "morning-digest", "skill-watch"}.issubset(cron_ids)
+    skill_ids = {skill["id"] for skill in morgan["skills"]}
+    assert {"nonprofit_grants", "donor_updates", "compliance_packet"}.issubset(skill_ids)
+    assert morgan["policy"]["bash"]["workspace_scoped"] is True
+    assert "context_query" in morgan["policy"]["audit"]
+
+
+def test_personal_agent_provisioning_records_actions_and_events():
+    response = client.post("/personal-agents/provision", json={"user_id": "morgan", "actor": "alex"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "provisioned"
+    assert data["agent"]["status"] == "provisioned"
+    assert data["agent"]["last_heartbeat"] is not None
+    action_types = {action["type"] for action in data["actions"]}
+    assert {"mkdir", "write_env", "write_mcp", "install_skills", "install_cron", "start_worker"}.issubset(action_types)
+
+    heartbeat = client.post("/personal-agents/morgan/heartbeat")
+    assert heartbeat.status_code == 200
+    assert heartbeat.json()["status"] == "alive"
+
+    mesh = client.get("/agents/status").json()
+    assert mesh["personal_agents"]["provisioned"] >= 1
+    event_types = {event["type"] for event in mesh["events"]}
+    assert {"provision", "heartbeat"}.issubset(event_types)
 
 
 def test_approval_queue_created_and_decision_is_auditable():
