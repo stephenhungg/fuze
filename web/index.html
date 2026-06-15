@@ -236,42 +236,43 @@
       </section>
 
       <section id="app-route" class="route-view app-route" data-route-view="/app">
-        <div class="app-shell">
+        <div class="app-shell chat-shell">
           <aside class="panel rail-panel">
             <div class="brand">
               <span class="mark">fz</span>
-              <div><h1>fuze</h1><p>Local agent workspace</p></div>
+              <div><h1>fuze</h1><p>Local agent chat</p></div>
             </div>
 
             <div class="rail-section">
-              <span class="section-kicker">Mission</span>
+              <span class="section-kicker">Current thread</span>
               <strong>Anderson Foundation report</strong>
-              <p>Grant readiness, policy checks, and approval routing.</p>
+              <p>Private context stays on the local appliance.</p>
             </div>
 
-            <textarea id="goal">get us ready for the anderson foundation report</textarea>
             <label for="user-select">Identity</label>
             <select id="user-select"></select>
-            <button id="run-btn" type="button">Run local agent</button>
 
-            <div class="status-grid">
-              <div><span>Mode</span><strong>local-first</strong></div>
-              <div><span>Cloud LLM calls</span><strong id="cloud-calls">0</strong></div>
-              <div><span>Skill</span><strong id="skill">not run</strong></div>
-              <div><span>Ollama</span><strong id="ollama">checking</strong></div>
-              <div><span>Qdrant</span><strong id="qdrant">checking</strong></div>
-              <div><span>Always-on</span><strong id="always-on">starting</strong></div>
-              <div><span>Role</span><strong id="role">grant_manager</strong></div>
-              <div><span>Identity</span><strong id="identity">demo-adapter</strong></div>
+            <div class="thread-list" aria-label="threads">
+              <button class="thread-item active" type="button">
+                <span>Grant report</span>
+                <strong>72% ready</strong>
+              </button>
+              <button class="thread-item" type="button">
+                <span>Volunteer hours</span>
+                <strong>Waiting on Jordan</strong>
+              </button>
+              <button class="thread-item" type="button">
+                <span>Story approval</span>
+                <strong>Needs program lead</strong>
+              </button>
             </div>
           </aside>
 
-          <section class="panel thread-panel">
-            <header class="topbar">
+          <section class="panel chat-main">
+            <header class="chat-header">
               <div>
-                <span class="section-kicker">Mission thread</span>
-                <h2>Get us ready for the Anderson Foundation report</h2>
-                <p>What staff needs to do, what fuze found, and what must be approved.</p>
+                <span class="section-kicker">Chat</span>
+                <h2>Anderson Foundation report</h2>
               </div>
               <div class="topbar-status">
                 <span id="confidence" class="pill">idle</span>
@@ -279,53 +280,35 @@
               </div>
             </header>
 
-            <section class="staff-brief" aria-label="staff dashboard">
-              <div class="brief-head"><span>Staff dashboard</span><strong id="brief-status">checking</strong></div>
-              <div id="staff-brief" class="brief-grid"></div>
-            </section>
-
-            <section class="readiness">
-              <div><span>Readiness</span><strong id="score">--%</strong></div>
-              <progress id="score-bar" max="100" value="0"></progress>
-            </section>
-
-            <div class="tabs">
-              <button class="tab active" data-tab="tasks" type="button">Tasks</button>
-              <button class="tab" data-tab="drafts" type="button">Drafts</button>
-              <button class="tab" data-tab="approvals" type="button">Approvals</button>
-              <button class="tab" data-tab="audit" type="button">Audit</button>
+            <div id="chat-thread" class="chat-thread" aria-live="polite">
+              <article class="message assistant-message">
+                <span>fuze</span>
+                <p>Ask me what needs to happen for the Anderson Foundation report. I’ll use local context, respect role policy, and queue approvals before anything leaves the org.</p>
+              </article>
             </div>
 
-            <div id="tasks" class="tab-panel active"></div>
-            <div id="drafts" class="tab-panel"></div>
-            <div id="approvals" class="tab-panel"></div>
-            <div id="audit" class="tab-panel"></div>
-
-            <h2>Agent stream</h2>
-            <div class="telemetry-grid">
-              <div><span>SSE</span><strong id="sse-status">connecting</strong></div>
-              <div><span>Events</span><strong id="event-count">0</strong></div>
-              <div><span>Policy</span><strong id="policy-count">0</strong></div>
-              <div><span>Approvals</span><strong id="approval-count">0</strong></div>
-            </div>
-            <div id="agent-stream" class="stack timeline"></div>
+            <form id="chat-form" class="composer">
+              <textarea id="goal">get us ready for the anderson foundation report</textarea>
+              <button id="run-btn" type="submit">Send</button>
+            </form>
           </section>
 
-          <aside class="panel inspector-panel">
-            <div class="inspector-head"><span class="section-kicker">Inspector</span><strong>Local context core</strong></div>
-            <h2>Context core</h2><div id="context-core" class="stack"></div>
-            <h2>Memory traversal</h2><div id="graph" class="graph"></div>
-            <h2>Blocked context</h2><div id="blocked" class="stack"></div>
-            <h2>Directory management</h2><div id="directory-management" class="stack"></div>
-            <h2>Context packet</h2><div id="identity-card" class="stack"></div><div id="org-profile" class="stack"></div><div id="context-list" class="stack"></div>
-            <h2>Runtime memory</h2><div id="ingestion-status" class="stack"></div><div id="vector-memory" class="stack"></div>
-            <h2>Pitch proof</h2><div id="pitch-proof" class="stack"></div>
-            <h2>Agent mesh</h2><div id="agent-mesh" class="stack"></div>
-            <h2>Onboarding</h2><div id="onboarding-flow" class="stack"></div>
-          </aside>
+        </div>
+
+        <div class="proof-cache" hidden>
+          <strong id="score">--%</strong><progress id="score-bar" max="100" value="0"></progress>
+          <strong id="cloud-calls">0</strong><strong id="skill">not run</strong><strong id="ollama">checking</strong><strong id="qdrant">checking</strong>
+          <strong id="always-on">starting</strong><strong id="role">grant_manager</strong><strong id="identity">demo-adapter</strong>
+          <strong id="sse-status">connecting</strong><strong id="event-count">0</strong><strong id="policy-count">0</strong><strong id="approval-count">0</strong>
+          <div id="staff-brief"></div><strong id="brief-status">checking</strong>
+          <div id="tasks" class="tab-panel active"></div><div id="drafts" class="tab-panel"></div><div id="approvals" class="tab-panel"></div><div id="audit" class="tab-panel"></div>
+          <div id="agent-stream"></div><div id="context-core"></div><div id="graph"></div><div id="blocked"></div><div id="directory-management"></div>
+          <div id="identity-card"></div><div id="org-profile"></div><div id="context-list"></div><div id="ingestion-status"></div><div id="vector-memory"></div>
+          <div id="pitch-proof"></div><div id="agent-mesh"></div><div id="onboarding-flow"></div>
         </div>
       </section>
     </main>
-    <script src="/static/app.js?v=linear-admin-sharp"></script>
+    <script src="/static/vendor/gsap.min.js?v=3.12.5-local"></script>
+    <script src="/static/app.js?v=chat-gsap"></script>
   </body>
 </html>

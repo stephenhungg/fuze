@@ -40,6 +40,8 @@ const authForm = document.querySelector("#auth-form");
 const authUser = document.querySelector("#auth-user");
 const adminAuthForm = document.querySelector("#admin-auth-form");
 const adminUser = document.querySelector("#admin-user");
+const chatForm = document.querySelector("#chat-form");
+const chatThread = document.querySelector("#chat-thread");
 let previewMode = false;
 
 function card(title, body, extra = "") {
@@ -104,7 +106,9 @@ function renderRoute(pathname = window.location.pathname) {
     link.classList.toggle("active", linkRoute === route || (route === "/admin" && linkRoute === "/admin/login"));
   });
   document.body.dataset.currentRoute = route.slice(1) || "landing";
+  document.documentElement.dataset.motion = canAnimate() ? "gsap" : "static";
   window.scrollTo({ top: 0, left: 0 });
+  animateRoute(route);
 }
 
 function navigateTo(pathname) {
@@ -113,6 +117,35 @@ function navigateTo(pathname) {
     window.history.pushState({}, "", route);
   }
   renderRoute(route);
+}
+
+function canAnimate() {
+  return Boolean(window.gsap) && !window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function animateRoute(route) {
+  if (!canAnimate()) return;
+  const view = document.querySelector(`[data-route-view="${route}"]`);
+  if (!view) return;
+  window.gsap.fromTo(
+    view,
+    { autoAlpha: 0, y: 8 },
+    { autoAlpha: 1, y: 0, duration: 0.28, ease: "power2.out", overwrite: "auto" },
+  );
+  window.gsap.fromTo(
+    view.querySelectorAll(".message, .landing-grid article, .onboarding-board article, .admin-section, .auth-panel, .auth-side"),
+    { autoAlpha: 0, y: 10 },
+    { autoAlpha: 1, y: 0, duration: 0.32, stagger: 0.035, ease: "power2.out", overwrite: "auto" },
+  );
+}
+
+function animateChat() {
+  if (!canAnimate() || !chatThread) return;
+  window.gsap.fromTo(
+    chatThread.querySelectorAll(".message"),
+    { autoAlpha: 0, y: 8 },
+    { autoAlpha: 1, y: 0, duration: 0.24, stagger: 0.04, ease: "power2.out", overwrite: "auto" },
+  );
 }
 
 const previewUsers = [
@@ -355,6 +388,7 @@ function render(result) {
   scoreBar.value = packet.readiness_score;
   confidence.textContent = packet.confidence;
   renderStaffBrief(result);
+  renderChat(result);
 
   identityCard.innerHTML = linesCard("Identity adapter", [
     `${packet.user.name} · ${packet.user.title}`,
@@ -421,6 +455,26 @@ function render(result) {
     card("Blocked context", result.audit.context_blocked.map((item) => `${item.id}: ${item.reasons.join("/")}`).join("; ")),
     card("Runtime", `${result.audit.model_runtime.provider}; cloud calls: ${result.audit.model_runtime.cloud_calls}`),
   ].join("");
+}
+
+function renderChat(result) {
+  if (!chatThread) return;
+  const packet = result.context_packet;
+  const pendingApprovals = result.approvals.filter((approval) => approval.status === "pending").length;
+  const urgentTasks = result.tasks.filter((task) => task.priority === "high").length;
+  const missing = packet.missing_info[0];
+  const topTasks = result.tasks.slice(0, 3);
+  const sourceNames = result.audit.sources_used.slice(0, 4).join(", ");
+  chatThread.innerHTML = [
+    `<article class="message user-message"><span>${escapeHtml(packet.user.name)}</span><p>${escapeHtml(result.audit.goal)}</p></article>`,
+    `<article class="message assistant-message"><span>fuze</span><p>${escapeHtml(`You are ${packet.readiness_score}% ready. I found ${urgentTasks} urgent tasks, ${pendingApprovals} approval gates, and one missing owner update from ${missing.owner}.`)}</p></article>`,
+    `<article class="message assistant-message"><span>next actions</span><ul>${topTasks
+      .map((task) => `<li><strong>${escapeHtml(sentenceCase(task.title))}</strong><small>${escapeHtml(`${task.owner} · ${task.status} · due ${task.due}`)}</small></li>`)
+      .join("")}</ul></article>`,
+    `<article class="message assistant-message"><span>policy</span><p>${escapeHtml(`${packet.blocked_context.length} sensitive context item(s) stayed blocked. I can draft inside fuze, but external export waits for executive approval.`)}</p></article>`,
+    `<article class="message system-message"><span>local context</span><p>${escapeHtml(`cloud calls: ${result.audit.model_runtime.cloud_calls}; sources: ${sourceNames}`)}</p></article>`,
+  ].join("");
+  animateChat();
 }
 
 function renderStaffBrief(result) {
@@ -705,7 +759,14 @@ adminAuthForm?.addEventListener("submit", (event) => {
   navigateTo("/admin");
 });
 
-runBtn.addEventListener("click", runAgent);
+chatForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  runAgent();
+});
+
+if (!chatForm) {
+  runBtn.addEventListener("click", runAgent);
+}
 userSelect.addEventListener("change", () => {
   localStorage.setItem("fuze-user", userSelect.value);
   runAgent();
