@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>fuze — pitch deck</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #000000; overflow: hidden; }
+  * { box-sizing: border-box; }
+
+  /* 1920x1080 stage, scaled to fit the viewport */
+  #stage {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 1920px; height: 1080px;
+    transform-origin: center center;
+    transform: translate(-50%, -50%) scale(1);
+    background: #FAFAFA;
+  }
+  #stage > section {
+    position: absolute; inset: 0;
+    width: 1920px; height: 1080px;
+    display: none;
+  }
+  #stage > section[data-deck-active] { display: flex; }
+
+  /* entrance animations (from the design source) */
+  @keyframes deckUp { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
+  @keyframes deckIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  @keyframes deckRise { from { opacity: 0; transform: translateY(46px); } to { opacity: 1; transform: none; } }
+
+  @media (prefers-reduced-motion: no-preference) {
+    section[data-deck-active] > * { animation: deckUp 0.64s cubic-bezier(0.16, 0.84, 0.3, 1) both; }
+    section[data-deck-active] > *:nth-child(1) { animation-delay: 0.04s; }
+    section[data-deck-active] > *:nth-child(2) { animation-delay: 0.13s; }
+    section[data-deck-active] > *:nth-child(3) { animation-delay: 0.22s; }
+    section[data-deck-active] > *:nth-child(4) { animation-delay: 0.31s; }
+    section[data-deck-active] > *:nth-child(5) { animation-delay: 0.40s; }
+    section[data-deck-active] > *:nth-child(6) { animation-delay: 0.49s; }
+    section[data-deck-active] > h1 { animation-name: deckRise; animation-duration: 0.78s; }
+    section[data-deck-active] [style*="repeat("] > * { animation: deckIn 0.55s cubic-bezier(0.16, 0.84, 0.3, 1) both; }
+    section[data-deck-active] [style*="repeat("] > *:nth-child(1) { animation-delay: 0.30s; }
+    section[data-deck-active] [style*="repeat("] > *:nth-child(2) { animation-delay: 0.37s; }
+    section[data-deck-active] [style*="repeat("] > *:nth-child(3) { animation-delay: 0.44s; }
+    section[data-deck-active] [style*="repeat("] > *:nth-child(4) { animation-delay: 0.51s; }
+    section[data-deck-active] [style*="repeat("] > *:nth-child(5) { animation-delay: 0.58s; }
+    section[data-deck-active] [style*="repeat("] > *:nth-child(6) { animation-delay: 0.65s; }
+    section[data-deck-active] [style*="repeat("] > *:nth-child(7) { animation-delay: 0.72s; }
+    section[data-deck-active] [style*="repeat("] > *:nth-child(8) { animation-delay: 0.79s; }
+  }
+
+  /* minimal presenter controls, sit in the letterbox */
+  #nav {
+    position: fixed; bottom: 18px; right: 22px; z-index: 10;
+    display: flex; align-items: center; gap: 14px;
+    font: 500 14px/1 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #8D7961; opacity: 0.55; transition: opacity 0.25s;
+  }
+  #nav:hover { opacity: 1; }
+  #nav button {
+    background: none; border: 1px solid #675845; color: #E6E1D8;
+    width: 30px; height: 30px; cursor: pointer; font-size: 15px; line-height: 1;
+  }
+  #nav button:hover { border-color: #FA5C01; color: #FA5C01; }
+  #counter { min-width: 54px; text-align: center; letter-spacing: 0.04em; }
+  @media print { #nav { display: none; } }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+<!-- ============ 1 · COVER ============ -->
+<section data-label="Cover" data-speaker-notes="fuze is an on-prem agent hub for nonprofits and regulated teams. Local-first memory and governance for always-on agents, running entirely on the Dell GB10 with zero cloud calls." style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#FAFAFA;color:#000000;padding:84px 110px;display:flex;flex-direction:column;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #D5D1C8;padding-bottom:24px;">
+    <span style="font-size:26px;font-weight:600;letter-spacing:0.02em;color:#000000;">fuze&reg;</span>
+    <span style="font-size:24px;color:#8D7961;">01 / 06</span>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:48px;">
+    <h1 style="font-size:172px;line-height:0.9;font-weight:600;letter-spacing:-0.045em;margin:0;color:#000000;">fuze</h1>
+    <div style="display:grid;grid-template-columns:240px 1fr;column-gap:48px;row-gap:18px;align-items:baseline;max-width:1300px;">
+      <span style="font-size:26px;color:#8D7961;text-align:right;">index</span>
+      <span style="font-size:34px;font-weight:500;line-height:1.2;color:#000000;">fuze-01</span>
+      <span style="font-size:26px;color:#8D7961;text-align:right;">category</span>
+      <span style="font-size:34px;font-weight:500;line-height:1.2;color:#000000;">On-prem agent hub /</span>
+      <span style="font-size:26px;color:#8D7961;text-align:right;">for</span>
+      <span style="font-size:34px;font-weight:500;line-height:1.2;color:#000000;">Grant teams at privacy-sensitive nonprofits /</span>
+      <span style="font-size:26px;color:#8D7961;text-align:right;">runtime</span>
+      <span style="font-size:34px;font-weight:500;line-height:1.2;color:#000000;">Dell GB10 · local-first · <span style="color:#FA5C01;">0 cloud LLM calls</span> /</span>
+      <span style="font-size:26px;color:#8D7961;text-align:right;">team</span>
+      <span style="font-size:34px;font-weight:500;line-height:1.2;color:#000000;">Madison Zhan / Stephen Hung /</span>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;gap:28px;align-items:baseline;border-top:1px solid #D5D1C8;padding-top:24px;">
+    <span style="font-size:24px;color:#8D7961;">Federated understanding / zero-trust execution</span>
+    <span style="font-size:24px;color:#8D7961;">mtl · 14.06.26</span>
+  </div>
+</section>
+
+<!-- ============ 2 · WHY FUZE ============ -->
+<section data-label="Why fuze" data-speaker-notes="For grant teams at privacy-sensitive nonprofits, the context agents need, donor records, case notes, program metrics, lives in private docs that can't go to the cloud. fuze runs the model locally on the GB10, always-on, and governs every step." style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#FAFAFA;color:#000000;padding:84px 110px;display:flex;flex-direction:column;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #D5D1C8;padding-bottom:24px;">
+    <span style="font-size:26px;font-weight:600;letter-spacing:0.02em;color:#000000;">fuze&reg;</span>
+    <span style="font-size:24px;color:#8D7961;">02 / 06</span>
+  </div>
+
+  <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:60px;">
+    <h2 style="font-size:84px;line-height:1.02;font-weight:600;letter-spacing:-0.03em;margin:0;color:#000000;max-width:1500px;">Cloud agents are <span style="color:#FA5C01;">context-starved</span></h2>
+
+    <div style="display:grid;grid-template-columns:240px 1fr;column-gap:48px;row-gap:28px;align-items:baseline;max-width:1520px;">
+      <span style="font-size:26px;color:#8D7961;text-align:right;">who</span>
+      <span style="font-size:36px;font-weight:500;line-height:1.3;color:#000000;">Grant teams at privacy-sensitive nonprofits /</span>
+      <span style="font-size:26px;color:#8D7961;text-align:right;">the context</span>
+      <span style="font-size:36px;font-weight:500;line-height:1.3;color:#000000;">Donor records, case notes, program metrics, grant requirements /</span>
+      <span style="font-size:26px;color:#8D7961;text-align:right;">the block</span>
+      <span style="font-size:36px;font-weight:500;line-height:1.3;color:#675845;">Too sensitive to upload, so cloud agents stay useless /</span>
+      <span style="font-size:26px;color:#8D7961;text-align:right;">the shift</span>
+      <span style="font-size:36px;font-weight:500;line-height:1.3;color:#FA5C01;">Run it locally on the GB10, always-on, governed at every step /</span>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:flex-end;gap:28px;align-items:baseline;border-top:1px solid #D5D1C8;padding-top:24px;">
+    <span style="font-size:24px;color:#8D7961;">Federated understanding / zero-trust execution</span>
+    <span style="font-size:24px;color:#8D7961;">14.06.26</span>
+  </div>
+</section>
+
+<!-- ============ 3 · DEMO RUN ============ -->
+<section data-label="Demo run" data-speaker-notes="One goal in. fuze traverses the memory graph, scores readiness at 72 percent, drafts tasks and follow-ups, and blocks sensitive context, all on the GB10." style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#FAFAFA;color:#000000;padding:56px 64px;display:flex;flex-direction:column;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #D5D1C8;padding-bottom:20px;margin-bottom:24px;">
+    <span style="font-size:24px;color:#8D7961;">live run · nonprofit grants, goal: get us ready for the anderson foundation report</span>
+    <span style="font-size:24px;color:#8D7961;">03 / 06</span>
+  </div>
+
+  <div style="flex:1;display:flex;gap:18px;min-height:0;">
+
+    <!-- LEFT: runtime + readiness -->
+    <div style="flex:0 0 28%;background:#FFFFFF;border:1px solid #D5D1C8;padding:26px;display:flex;flex-direction:column;gap:16px;">
+      <span style="font-size:24px;color:#8D7961;">local runtime</span>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:25px;color:#2F2F2F;">Mode</span><span style="font-size:25px;color:#000000;">local-first</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:25px;color:#2F2F2F;">Cloud LLM calls</span><span style="font-size:28px;font-weight:700;color:#FA5C01;">0</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:25px;color:#2F2F2F;">Ollama</span><span style="font-size:25px;color:#000000;">▪ online</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:25px;color:#2F2F2F;">Qdrant</span><span style="font-size:25px;color:#000000;">▪ online</span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:25px;color:#2F2F2F;">Monitor</span><span style="font-size:25px;color:#FA5C01;">▪ active</span></div>
+      </div>
+      <div style="flex:1;"></div>
+      <div style="background:#E6E1D8;border:1px solid #D5D1C8;padding:22px;">
+        <span style="font-size:24px;color:#675845;">report readiness</span>
+        <div style="font-size:84px;line-height:1;font-weight:600;color:#FA5C01;margin-top:8px;letter-spacing:-0.02em;">72%</div>
+        <div style="height:12px;background:#D5D1C8;margin-top:14px;overflow:hidden;"><div style="width:72%;height:100%;background:#FA5C01;"></div></div>
+        <span style="font-size:24px;color:#675845;display:block;margin-top:12px;">2 items missing before export</span>
+      </div>
+    </div>
+
+    <!-- MIDDLE: memory graph -->
+    <div style="flex:1 1 auto;background:#FFFFFF;border:1px solid #D5D1C8;padding:26px;display:flex;flex-direction:column;gap:12px;min-width:0;">
+      <span style="font-size:24px;color:#8D7961;">memory graph · traversed path</span>
+
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="flex:none;width:38px;height:38px;background:#2F2F2F;color:#FAFAFA;font-weight:700;font-size:24px;display:flex;align-items:center;justify-content:center;">1</div>
+        <div style="flex:1;background:#FAFAFA;border:1px solid #D5D1C8;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:26px;color:#000000;">Anderson Foundation</span><span style="font-size:24px;color:#8D7961;">funder</span></div>
+      </div>
+      <div style="width:2px;height:10px;background:#D5D1C8;margin-left:18px;"></div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="flex:none;width:38px;height:38px;background:#2F2F2F;color:#FAFAFA;font-weight:700;font-size:24px;display:flex;align-items:center;justify-content:center;">2</div>
+        <div style="flex:1;background:#FAFAFA;border:1px solid #D5D1C8;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:26px;color:#000000;">Grant Agreement</span><span style="font-size:24px;color:#8D7961;">evidence</span></div>
+      </div>
+      <div style="width:2px;height:10px;background:#D5D1C8;margin-left:18px;"></div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="flex:none;width:38px;height:38px;background:#2F2F2F;color:#FAFAFA;font-weight:700;font-size:24px;display:flex;align-items:center;justify-content:center;">3</div>
+        <div style="flex:1;background:#FAFAFA;border:1px solid #D5D1C8;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:26px;color:#000000;">Reporting Requirements</span><span style="font-size:24px;color:#675845;">due jun 20</span></div>
+      </div>
+      <div style="width:2px;height:10px;background:#D5D1C8;margin-left:18px;"></div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="flex:none;width:38px;height:38px;background:#2F2F2F;color:#FAFAFA;font-weight:700;font-size:24px;display:flex;align-items:center;justify-content:center;">4</div>
+        <div style="flex:1;background:#FAFAFA;border:1px solid #D5D1C8;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:26px;color:#000000;">Program Metrics</span><span style="font-size:24px;color:#000000;">1,284 meals · 412 youth</span></div>
+      </div>
+      <div style="width:2px;height:10px;background:#D5D1C8;margin-left:18px;"></div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="flex:none;width:38px;height:38px;background:#FA5C01;color:#FFFFFF;font-weight:700;font-size:24px;display:flex;align-items:center;justify-content:center;">5</div>
+        <div style="flex:1;background:#FFFFFF;border:1px solid #FA5C01;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:26px;color:#000000;">Missing Volunteer Hours</span><span style="font-size:24px;color:#FA5C01;">gap</span></div>
+      </div>
+      <div style="width:2px;height:10px;background:#D5D1C8;margin-left:18px;"></div>
+      <div style="display:flex;align-items:center;gap:16px;">
+        <div style="flex:none;width:38px;height:38px;background:#2F2F2F;color:#FAFAFA;font-weight:700;font-size:24px;display:flex;align-items:center;justify-content:center;">6</div>
+        <div style="flex:1;background:#FAFAFA;border:1px solid #D5D1C8;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;"><span style="font-size:26px;color:#000000;">Jordan</span><span style="font-size:24px;color:#8D7961;">owner · ask today</span></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: action packet -->
+    <div style="flex:0 0 30%;background:#FFFFFF;border:1px solid #D5D1C8;padding:26px;display:flex;flex-direction:column;gap:13px;">
+      <div style="display:flex;gap:8px;">
+        <span style="flex:1;text-align:center;font-size:24px;color:#FFFFFF;background:#2F2F2F;padding:10px;">Tasks</span>
+        <span style="flex:1;text-align:center;font-size:24px;color:#675845;border:1px solid #D5D1C8;padding:10px;">Drafts</span>
+        <span style="flex:1;text-align:center;font-size:24px;color:#675845;border:1px solid #D5D1C8;padding:10px;">Audit</span>
+      </div>
+
+      <div style="background:#FAFAFA;border:1px solid #D5D1C8;padding:14px 16px;display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:25px;color:#000000;">Ask Jordan · May hours</span><span style="font-size:24px;color:#FA5C01;">high</span></div>
+        <span style="font-size:24px;color:#8D7961;">owner: Jordan · due today</span>
+      </div>
+      <div style="background:#FAFAFA;border:1px solid #D5D1C8;padding:14px 16px;display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:25px;color:#000000;">Confirm attendance · 412</span><span style="font-size:24px;color:#675845;">med</span></div>
+        <span style="font-size:24px;color:#8D7961;">owner: Sarah · due today</span>
+      </div>
+      <div style="background:#FAFAFA;border:1px solid #D5D1C8;padding:14px 16px;display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:25px;color:#000000;">Approve anonymized story</span><span style="font-size:24px;color:#675845;">approval</span></div>
+        <span style="font-size:24px;color:#8D7961;">owner: program lead</span>
+      </div>
+
+      <div style="background:#FFFFFF;border:1px solid #FA5C01;padding:14px 16px;">
+        <span style="font-size:24px;color:#FA5C01;">blocked context · 3</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+          <span style="font-size:24px;color:#000000;background:#FFFFFF;border:1px solid #D5D1C8;padding:7px 12px;">minor name</span>
+          <span style="font-size:24px;color:#000000;background:#FFFFFF;border:1px solid #D5D1C8;padding:7px 12px;">address</span>
+          <span style="font-size:24px;color:#000000;background:#FFFFFF;border:1px solid #D5D1C8;padding:7px 12px;">raw case note</span>
+        </div>
+      </div>
+
+      <div style="flex:1;"></div>
+      <span style="font-size:24px;color:#675845;background:#E6E1D8;border:1px solid #D5D1C8;padding:11px 14px;text-align:center;">approval required before external export</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 · GOVERNED & LOCAL ============ -->
+<section data-label="Governed & local" data-speaker-notes="Aggregate metrics flow out with citations; the minor's name, address, and raw case note are blocked from external output. And it's all local, 0 cloud calls, with an always-on monitor that keeps working between prompts." style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#FAFAFA;color:#000000;padding:72px 96px;display:flex;flex-direction:column;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #D5D1C8;padding-bottom:24px;">
+    <span style="font-size:26px;font-weight:600;letter-spacing:0.02em;color:#000000;">fuze&reg;</span>
+    <span style="font-size:24px;color:#8D7961;">04 / 06</span>
+  </div>
+
+  <h2 style="font-size:60px;line-height:1.05;font-weight:600;letter-spacing:-0.025em;margin:32px 0 0;color:#000000;max-width:1560px;">Sensitive context blocked, and <span style="color:#FA5C01;">zero data</span> sent to the cloud</h2>
+
+  <div style="flex:1;display:flex;gap:26px;margin-top:34px;align-items:stretch;">
+
+    <!-- LEFT: governance -->
+    <div style="flex:1;display:flex;flex-direction:column;gap:16px;">
+      <div style="flex:1;background:#FFFFFF;border:1px solid #D5D1C8;padding:26px;display:flex;flex-direction:column;gap:12px;">
+        <span style="font-size:24px;color:#8D7961;">allowed externally / with citations</span>
+        <span style="font-size:30px;font-weight:500;color:#000000;line-height:1.35;">1,284 meals · 412 youth attendance · board-approved anonymized language</span>
+      </div>
+      <div style="flex:1;background:#FFFFFF;border:1px solid #FA5C01;border-left-width:6px;padding:26px;display:flex;flex-direction:column;gap:12px;">
+        <span style="font-size:24px;color:#FA5C01;">blocked / stays internal</span>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <span style="font-size:27px;color:#000000;background:#E6E1D8;padding:9px 16px;">minor's name</span>
+          <span style="font-size:27px;color:#000000;background:#E6E1D8;padding:9px 16px;">home address</span>
+          <span style="font-size:27px;color:#000000;background:#E6E1D8;padding:9px 16px;">raw case note</span>
+        </div>
+        <span style="font-size:24px;color:#675845;">36 sensitive chunks blocked across 13 ingested docs</span>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <span style="font-size:24px;color:#675845;border:1px solid #D5D1C8;padding:11px 18px;">no raw pii external</span>
+        <span style="font-size:24px;color:#675845;border:1px solid #D5D1C8;padding:11px 18px;">cite every metric</span>
+        <span style="font-size:24px;color:#675845;border:1px solid #D5D1C8;padding:11px 18px;">approval before send</span>
+      </div>
+    </div>
+
+    <!-- RIGHT: local-first proof -->
+    <div style="flex:1;background:#FFFFFF;border:1px solid #D5D1C8;padding:30px;display:flex;flex-direction:column;gap:20px;">
+      <div style="display:flex;align-items:baseline;gap:20px;">
+        <span style="font-size:124px;line-height:0.82;font-weight:600;letter-spacing:-0.04em;color:#FA5C01;">0</span>
+        <span style="font-size:34px;font-weight:500;color:#000000;line-height:1.15;">cloud LLM<br>calls</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#FAFAFA;border:1px solid #D5D1C8;padding:18px;"><span style="font-size:24px;color:#8D7961;">appliance</span><div style="font-size:27px;font-weight:500;color:#000000;margin-top:6px;">Dell GB10</div></div>
+        <div style="background:#FAFAFA;border:1px solid #D5D1C8;padding:18px;"><span style="font-size:24px;color:#8D7961;">inference</span><div style="font-size:27px;font-weight:500;color:#000000;margin-top:6px;">Ollama · qwen3</div></div>
+        <div style="background:#FAFAFA;border:1px solid #D5D1C8;padding:18px;"><span style="font-size:24px;color:#8D7961;">embeddings</span><div style="font-size:27px;font-weight:500;color:#000000;margin-top:6px;">nomic-embed</div></div>
+        <div style="background:#FAFAFA;border:1px solid #D5D1C8;padding:18px;"><span style="font-size:24px;color:#8D7961;">memory</span><div style="font-size:27px;font-weight:500;color:#000000;margin-top:6px;">Qdrant</div></div>
+      </div>
+      <span style="font-size:26px;line-height:1.4;color:#675845;margin-top:auto;">An always-on monitor refreshes readiness and audit state on its own, the agent keeps working between prompts.</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 · BUSINESS IMPACT ============ -->
+<section data-label="Business impact" data-speaker-notes="For small nonprofits, grant reporting is high-stakes admin trapped in private docs. In this demo fuze took grant readiness from a multi-hour manual check to about thirty seconds: 13 docs ingested, 36 sensitive chunks blocked, 3 tasks and 2 approval gates generated, zero cloud calls. It protects funding by catching gaps before deadlines and keeps client data inside the building." style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#FAFAFA;color:#000000;padding:64px 96px;display:flex;flex-direction:column;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #D5D1C8;padding-bottom:24px;">
+    <span style="font-size:26px;font-weight:600;letter-spacing:0.02em;color:#000000;">fuze&reg;</span>
+    <span style="font-size:24px;color:#8D7961;">05 / 06</span>
+  </div>
+
+  <h2 style="font-size:54px;line-height:1.04;font-weight:600;letter-spacing:-0.025em;margin:24px 0 0;color:#000000;max-width:1600px;">Measurable impact for <span style="color:#FA5C01;">grant teams</span></h2>
+  <span style="font-size:27px;color:#675845;margin-top:14px;max-width:1560px;line-height:1.35;">For small nonprofits, grant reporting is high-stakes admin work trapped in private docs. fuze turns it into a local agent workflow, without data leaving the building.</span>
+
+  <div style="flex:1;display:flex;gap:24px;margin-top:26px;align-items:stretch;">
+
+    <div style="flex:0 0 44%;display:flex;flex-direction:column;gap:14px;">
+      <div style="background:#FFFFFF;border:1px solid #FA5C01;border-left-width:6px;padding:24px 26px;display:flex;flex-direction:column;gap:6px;">
+        <span style="font-size:24px;color:#8D7961;">grant readiness check, this demo</span>
+        <div style="display:flex;align-items:baseline;gap:18px;flex-wrap:wrap;">
+          <span style="font-size:38px;font-weight:500;color:#675845;text-decoration:line-through;">3 hours</span>
+          <span style="font-size:36px;color:#8D7961;">→</span>
+          <span style="font-size:60px;font-weight:600;letter-spacing:-0.02em;color:#FA5C01;">30 seconds</span>
+        </div>
+      </div>
+      <div style="flex:1;display:grid;grid-template-columns:repeat(2,1fr);grid-auto-rows:1fr;gap:12px;">
+        <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:16px 20px;display:flex;flex-direction:column;gap:2px;justify-content:center;"><span style="font-size:46px;font-weight:600;color:#FA5C01;letter-spacing:-0.02em;line-height:1;">0</span><span style="font-size:24px;color:#675845;">cloud LLM calls</span></div>
+        <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:16px 20px;display:flex;flex-direction:column;gap:2px;justify-content:center;"><span style="font-size:46px;font-weight:600;color:#000000;letter-spacing:-0.02em;line-height:1;">13</span><span style="font-size:24px;color:#675845;">docs ingested</span></div>
+        <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:16px 20px;display:flex;flex-direction:column;gap:2px;justify-content:center;"><span style="font-size:46px;font-weight:600;color:#000000;letter-spacing:-0.02em;line-height:1;">36</span><span style="font-size:24px;color:#675845;">policy blocks</span></div>
+        <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:16px 20px;display:flex;flex-direction:column;gap:2px;justify-content:center;"><span style="font-size:46px;font-weight:600;color:#000000;letter-spacing:-0.02em;line-height:1;">3</span><span style="font-size:24px;color:#675845;">tasks generated</span></div>
+        <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:16px 20px;display:flex;flex-direction:column;gap:2px;justify-content:center;"><span style="font-size:46px;font-weight:600;color:#000000;letter-spacing:-0.02em;line-height:1;">2</span><span style="font-size:24px;color:#675845;">approval gates</span></div>
+        <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:16px 20px;display:flex;flex-direction:column;gap:2px;justify-content:center;"><span style="font-size:46px;font-weight:600;color:#FA5C01;letter-spacing:-0.02em;line-height:1;">72%</span><span style="font-size:24px;color:#675845;">report readiness</span></div>
+      </div>
+    </div>
+
+    <div style="flex:1;display:grid;grid-template-rows:repeat(3,1fr);gap:14px;">
+      <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:24px 26px;display:flex;flex-direction:column;gap:10px;justify-content:center;">
+        <span style="font-size:24px;color:#8D7961;">funding protected</span>
+        <span style="font-size:30px;font-weight:500;line-height:1.3;color:#000000;">Missing info is caught before the deadline. No late or incomplete grant reports, no lost funding.</span>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #FA5C01;border-left-width:6px;padding:24px 26px;display:flex;flex-direction:column;gap:10px;justify-content:center;">
+        <span style="font-size:24px;color:#FA5C01;">privacy by default</span>
+        <span style="font-size:30px;font-weight:500;line-height:1.3;color:#000000;">Client PII and case notes never leave the building, dignity for the people served.</span>
+      </div>
+      <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:24px 26px;display:flex;flex-direction:column;gap:10px;justify-content:center;">
+        <span style="font-size:24px;color:#8D7961;">less admin work</span>
+        <span style="font-size:30px;font-weight:500;line-height:1.3;color:#000000;">Agents prepare the reporting; staff just confirm and approve.</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:flex-end;border-top:1px solid #D5D1C8;padding-top:22px;margin-top:24px;">
+    <span style="font-size:30px;font-weight:500;color:#000000;line-height:1.3;text-align:right;">Helping mission-driven orgs do more good, <span style="color:#FA5C01;">while protecting the people they serve.</span></span>
+  </div>
+</section>
+
+<!-- ============ 6 · WHAT WE BUILT ============ -->
+<section data-label="What we built" data-speaker-notes="Here is what is actually running on the GB10 today: a local dashboard, the agent runtime, Ollama inference, Qdrant memory, a hybrid vector and graph core, the policy filter, an always-on monitor over an SSE event stream, and approval gates before anything leaves the org. Every run follows one pipeline: goal, context, policy, action, approval, audit. Grants today; donor updates, volunteer ops, and compliance next." style="font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;background:#FAFAFA;color:#000000;padding:64px 96px;display:flex;flex-direction:column;box-sizing:border-box;">
+  <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid #D5D1C8;padding-bottom:24px;">
+    <span style="font-size:26px;font-weight:600;letter-spacing:0.02em;color:#000000;">fuze&reg;</span>
+    <span style="font-size:24px;color:#8D7961;">06 / 06</span>
+  </div>
+
+  <h2 style="font-size:58px;line-height:1.05;font-weight:600;letter-spacing:-0.025em;margin:28px 0 0;color:#000000;">What we built</h2>
+
+  <div style="display:grid;grid-template-columns:160px 1fr;column-gap:36px;row-gap:18px;align-items:center;margin-top:22px;">
+    <span style="font-size:24px;color:#8D7961;text-align:right;">pipeline</span>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:25px;color:#000000;background:#FFFFFF;border:1px solid #D5D1C8;padding:11px 18px;">goal</span>
+      <span style="font-size:25px;color:#8D7961;">→</span>
+      <span style="font-size:25px;color:#000000;background:#FFFFFF;border:1px solid #D5D1C8;padding:11px 18px;">context</span>
+      <span style="font-size:25px;color:#8D7961;">→</span>
+      <span style="font-size:25px;color:#000000;background:#FFFFFF;border:1px solid #FA5C01;padding:11px 18px;">policy</span>
+      <span style="font-size:25px;color:#8D7961;">→</span>
+      <span style="font-size:25px;color:#000000;background:#FFFFFF;border:1px solid #D5D1C8;padding:11px 18px;">action</span>
+      <span style="font-size:25px;color:#8D7961;">→</span>
+      <span style="font-size:25px;color:#000000;background:#FFFFFF;border:1px solid #FA5C01;padding:11px 18px;">approval</span>
+      <span style="font-size:25px;color:#8D7961;">→</span>
+      <span style="font-size:25px;color:#000000;background:#FFFFFF;border:1px solid #D5D1C8;padding:11px 18px;">audit</span>
+    </div>
+  </div>
+
+  <span style="font-size:24px;color:#8D7961;margin-top:30px;">shipped for the demo, running on the GB10 today</span>
+  <div style="flex:1;display:grid;grid-template-columns:repeat(4,1fr);grid-auto-rows:1fr;gap:14px;margin-top:14px;">
+    <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:18px 20px;display:flex;flex-direction:column;gap:6px;"><span style="font-size:24px;color:#FA5C01;">▪ shipped</span><span style="font-size:27px;font-weight:500;color:#000000;">Local dashboard</span><span style="font-size:24px;line-height:1.3;color:#675845;">Status and event stream ui</span></div>
+    <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:18px 20px;display:flex;flex-direction:column;gap:6px;"><span style="font-size:24px;color:#FA5C01;">▪ shipped</span><span style="font-size:27px;font-weight:500;color:#000000;">Agent runtime</span><span style="font-size:24px;line-height:1.3;color:#675845;">Orchestrates the run on GB10</span></div>
+    <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:18px 20px;display:flex;flex-direction:column;gap:6px;"><span style="font-size:24px;color:#FA5C01;">▪ shipped</span><span style="font-size:27px;font-weight:500;color:#000000;">Ollama inference</span><span style="font-size:24px;line-height:1.3;color:#675845;">qwen3, fully local</span></div>
+    <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:18px 20px;display:flex;flex-direction:column;gap:6px;"><span style="font-size:24px;color:#FA5C01;">▪ shipped</span><span style="font-size:27px;font-weight:500;color:#000000;">Qdrant memory</span><span style="font-size:24px;line-height:1.3;color:#675845;">Vector store, fuze_context</span></div>
+    <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:18px 20px;display:flex;flex-direction:column;gap:6px;"><span style="font-size:24px;color:#FA5C01;">▪ shipped</span><span style="font-size:27px;font-weight:500;color:#000000;">Vector + graph core</span><span style="font-size:24px;line-height:1.3;color:#675845;">Hybrid context retrieval</span></div>
+    <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:18px 20px;display:flex;flex-direction:column;gap:6px;"><span style="font-size:24px;color:#FA5C01;">▪ shipped</span><span style="font-size:27px;font-weight:500;color:#000000;">Policy filter</span><span style="font-size:24px;line-height:1.3;color:#675845;">pii and role rules</span></div>
+    <div style="background:#FFFFFF;border:1px solid #FA5C01;border-left-width:6px;padding:18px 20px;display:flex;flex-direction:column;gap:6px;"><span style="font-size:24px;color:#FA5C01;">▪ shipped</span><span style="font-size:27px;font-weight:500;color:#000000;">Always-on monitor</span><span style="font-size:24px;line-height:1.3;color:#675845;">SSE stream, acts between prompts</span></div>
+    <div style="background:#FFFFFF;border:1px solid #D5D1C8;padding:18px 20px;display:flex;flex-direction:column;gap:6px;"><span style="font-size:24px;color:#FA5C01;">▪ shipped</span><span style="font-size:27px;font-weight:500;color:#000000;">Approval gates</span><span style="font-size:24px;line-height:1.3;color:#675845;">Before any external export</span></div>
+  </div>
+
+  <div style="display:flex;align-items:center;justify-content:flex-end;gap:28px;border-top:1px solid #D5D1C8;padding-top:22px;margin-top:24px;">
+    <span style="font-size:24px;color:#8D7961;">next: donor updates / volunteer ops / compliance packets /</span>
+    <span style="font-size:24px;color:#8D7961;">FastAPI on GB10 · <span style="color:#FA5C01;">0 cloud LLM calls</span></span>
+  </div>
+</section>
+
+</div><!-- /#stage -->
+
+<div id="nav">
+  <button id="prev" aria-label="Previous slide">&#8249;</button>
+  <span id="counter">01 / 06</span>
+  <button id="next" aria-label="Next slide">&#8250;</button>
+</div>
+
+<script>
+(function () {
+  var stage = document.getElementById('stage');
+  var slides = Array.prototype.slice.call(stage.querySelectorAll('section'));
+  var counter = document.getElementById('counter');
+  var i = 0;
+
+  function fit() {
+    var s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = 'translate(-50%, -50%) scale(' + s + ')';
+  }
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) {
+      if (k === i) { s.setAttribute('data-deck-active', ''); }
+      else { s.removeAttribute('data-deck-active'); }
+    });
+    void stage.offsetWidth;
+    counter.textContent = pad(i + 1) + ' / ' + pad(slides.length);
+  }
+
+  window.addEventListener('resize', fit);
+  window.addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { show(i + 1); e.preventDefault(); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { show(i - 1); }
+    else if (e.key === 'Home') { show(0); }
+    else if (e.key === 'End') { show(slides.length - 1); }
+    else if (e.key === 'f' || e.key === 'F') {
+      if (!document.fullscreenElement) { document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); }
+      else { document.exitFullscreen && document.exitFullscreen(); }
+    }
+  });
+  document.getElementById('next').addEventListener('click', function (e) { e.stopPropagation(); show(i + 1); });
+  document.getElementById('prev').addEventListener('click', function (e) { e.stopPropagation(); show(i - 1); });
+  stage.addEventListener('click', function () { show(i + 1); });
+
+  fit();
+  show(0);
+})();
+</script>
+</body>
+</html>
