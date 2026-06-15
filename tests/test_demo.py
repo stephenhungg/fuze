@@ -120,6 +120,59 @@ def test_chat_endpoint_is_single_turn_chat_contract():
     assert "- required:" in report.json()["response"]
 
 
+def test_chat_endpoint_rewrites_followups_with_thread_history():
+    first = client.post(
+        "/chat",
+        json={
+            "message": "what do we need for the anderson report?",
+            "role": "grant_manager",
+            "user_id": "morgan",
+            "thread_id": "thread-followup",
+        },
+    )
+    assert first.status_code == 200
+
+    followup = client.post(
+        "/chat",
+        json={
+            "message": "what about approvals?",
+            "role": "grant_manager",
+            "user_id": "morgan",
+            "thread_id": "thread-followup",
+        },
+    )
+
+    assert followup.status_code == 200
+    data = followup.json()
+    assert data["history_used"] is True
+    assert data["effective_goal"] == "what approvals are needed for the anderson report?"
+    assert "executive director" in data["response"]
+    assert "program lead" in data["response"]
+    assert data["chat_runtime"]["mode"] == "history-aware chat turn"
+
+
+def test_chat_endpoint_uses_client_history_for_followups():
+    followup = client.post(
+        "/chat",
+        json={
+            "message": "who owns that?",
+            "role": "grant_manager",
+            "user_id": "morgan",
+            "thread_id": "thread-client-history",
+            "history": [
+                {"role": "user", "text": "what do we need for the anderson report?"},
+                {"role": "assistant", "text": "for the anderson report, jordan owns the missing may volunteer hours."},
+            ],
+        },
+    )
+
+    assert followup.status_code == 200
+    data = followup.json()
+    assert data["effective_goal"] == "who owns the missing items for the anderson report?"
+    assert "jordan" in data["response"]
+    assert "sarah" in data["response"]
+
+
 def test_system_runtime_is_honest_about_gb10_boundary():
     response = client.get("/system/runtime")
 

@@ -14,7 +14,7 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from . import agent, events, identity, ingest, onboarding, personal_agents, policy, retrieval, runtime, vector_memory
 from .db import DEMO_GOAL, store
@@ -33,6 +33,7 @@ monitor_state: dict[str, Any] = {
     "next_check": None,
 }
 monitor_task: asyncio.Task | None = None
+CHAT_THREADS: dict[str, list[dict[str, str]]] = {}
 
 
 @asynccontextmanager
@@ -82,7 +83,7 @@ class ChatRequest(BaseModel):
     role: str = "grant_manager"
     user_id: str | None = "morgan"
     thread_id: str | None = None
-    history: list[dict[str, Any]] = []
+    history: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class PolicyRequest(BaseModel):
@@ -137,6 +138,39 @@ def body(model: BaseModel) -> dict[str, Any]:
     if hasattr(model, "model_dump"):
         return model.model_dump()
     return model.dict()
+
+
+def chat_history_for(request: ChatRequest) -> list[dict[str, Any]]:
+    server_history = CHAT_THREADS.get(request.thread_id or "", [])
+    merged: list[dict[str, Any]] = []
+    seen: set[tuple[str, str]] = set()
+    for message in [*server_history, *request.history]:
+        if not isinstance(message, dict):
+            continue
+        role = str(message.get("role") or "user")
+        text = str(message.get("text") or message.get("message") or message.get("content") or "").strip()
+        if not text:
+            continue
+        key = (role, text)
+        if key in seen:
+            continue
+        seen.add(key)
+        merged.append({"role": role, "text": text})
+    return merged[-16:]
+
+
+def remember_chat_turn(thread_id: str | None, user_text: str, assistant_text: str) -> list[dict[str, str]]:
+    if not thread_id:
+        return []
+    thread = CHAT_THREADS.setdefault(thread_id, [])
+    thread.extend(
+        [
+            {"role": "user", "text": user_text},
+            {"role": "assistant", "text": assistant_text},
+        ]
+    )
+    del thread[:-24]
+    return thread
 
 
 async def proxy_runtime(
@@ -311,15 +345,21 @@ async def chat(request: ChatRequest) -> dict[str, Any]:
     if runtime.configured():
         return await proxy_runtime("POST", "/chat", body(request), timeout=120)
     await ensure_demo_memory()
-    result = agent.run_agent(goal=request.message, role=request.role, user_id=request.user_id)
+    history = chat_history_for(request)
+    effective_goal = agent.expand_followup_goal(request.message, history)
+    result = agent.run_agent(goal=effective_goal, role=request.role, user_id=request.user_id)
+    stored_history = remember_chat_turn(request.thread_id, request.message, result["response"])
     events.record_run(result, trigger="chat")
     return {
         **result,
         "thread_id": request.thread_id,
         "message": request.message,
-        "history_count": len(request.history),
+        "effective_goal": effective_goal,
+        "history_used": bool(history),
+        "history_count": len(history),
+        "server_history_count": len(stored_history),
         "chat_runtime": {
-            "mode": "single chat turn",
+            "mode": "history-aware chat turn",
             "backend": "/chat",
             "cloud_llm_calls": 0,
         },

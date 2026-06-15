@@ -10,6 +10,46 @@ from . import runtime
 from .db import DEMO_GOAL, store
 
 
+def history_text(history: list[dict[str, Any]] | None) -> str:
+    if not history:
+        return ""
+    text_parts: list[str] = []
+    for message in history[-10:]:
+        if not isinstance(message, dict):
+            continue
+        text = message.get("text") or message.get("message") or message.get("content") or ""
+        if text:
+            text_parts.append(str(text))
+    return " ".join(text_parts).lower()
+
+
+def expand_followup_goal(goal: str, history: list[dict[str, Any]] | None = None) -> str:
+    """turn short follow-ups into standalone questions before retrieval."""
+    question = goal.lower().strip()
+    if not question:
+        return goal
+
+    thread = history_text(history)
+    has_anderson_context = "anderson" in thread or "foundation report" in thread
+    if not has_anderson_context or "anderson" in question:
+        return goal
+
+    if any(term in question for term in ["approval", "approve", "gate", "export", "review"]):
+        return "what approvals are needed for the anderson report?"
+    if any(term in question for term in ["source", "citation", "evidence", "doc", "document"]):
+        return "what sources support the anderson report?"
+    if any(term in question for term in ["blocked", "sensitive", "pii", "private", "policy", "case note"]):
+        return "what sensitive context is blocked for the anderson report?"
+    if any(term in question for term in ["owner", "who", "responsible", "jordan", "sarah"]):
+        return "who owns the missing items for the anderson report?"
+    if any(term in question for term in ["draft", "email", "write", "send", "follow-up", "followup"]):
+        return "draft the jordan follow-up for the anderson report"
+    if question in {"what", "why", "how", "that", "more", "again", "next"} or len(question.split()) <= 2:
+        return "what else matters for the anderson report?"
+
+    return goal
+
+
 def create_tasks() -> list[dict[str, Any]]:
     tasks = [
         {
@@ -157,6 +197,51 @@ def answer_goal(
             "try asking about a report, owner, deadline, donor update, approval, blocked context, or a document source."
         )
 
+    if "anderson" in question and any(term in question for term in ["approval", "approve", "gate", "export", "review"]):
+        approval_titles = "; ".join(approval["title"] for approval in approvals[:2])
+        return (
+            "approvals for the anderson report:\n\n"
+            f"- required gates: {approval_titles}\n"
+            "- executive director: must approve the external report export before anything leaves fuze\n"
+            "- program lead: must approve the anonymized participant story before it can be used\n"
+            "- automatic guardrail: raw case notes and identifying details stay blocked from external output\n\n"
+            f"sources: {sources}"
+        )
+
+    if "anderson" in question and any(term in question for term in ["source", "citation", "evidence", "doc", "document"]):
+        cited = "; ".join(context["citations"][:5])
+        allowed_titles = "; ".join(item["title"] for item in context["allowed_context"][:4])
+        return (
+            "sources for the anderson report:\n\n"
+            f"- retrieved evidence: {allowed_titles}\n"
+            f"- citations fuze can attach: {cited}\n"
+            "- blocked evidence: raw case-note details are visible to policy checks but not allowed in external text\n\n"
+            "that means the report can cite grant requirements, program metrics, approved story-bank material, and board approval evidence."
+        )
+
+    if "anderson" in question and any(term in question for term in ["blocked", "sensitive", "pii", "private", "policy", "case note"]):
+        blocked = context.get("blocked_context", [])
+        blocked_lines = "; ".join(f"{item['title']} ({', '.join(item['reasons'])})" for item in blocked[:3])
+        return (
+            "blocked context for the anderson report:\n\n"
+            f"- policy-blocked items: {blocked_lines or 'none in the current packet'}\n"
+            "- safe substitute: use an approved anonymized participant story from the story bank\n"
+            "- action rule: fuze can draft internally, but external export waits for human approval\n\n"
+            f"sources: {sources}"
+        )
+
+    if "anderson" in question and any(term in question for term in ["who", "owner", "responsible"]):
+        owners = sorted({task["owner"] for task in tasks})
+        return (
+            "current owners for the anderson report:\n\n"
+            f"- active owners: {', '.join(owners)}\n"
+            "- jordan: missing may volunteer-hours update\n"
+            "- sarah: attendance confirmation before the packet is locked\n"
+            "- program leadership: anonymized story approval\n"
+            "- executive director: final external export approval\n\n"
+            "raw case notes stay blocked for external output."
+        )
+
     if "anderson" in question and any(term in question for term in ["need", "required", "report", "ready", "missing"]):
         requirements = [
             "meals served",
@@ -174,6 +259,17 @@ def answer_goal(
             f"- gap: {missing_line}\n"
             f"- next actions: {open_tasks}\n"
             f"- approvals before export: {approval_titles}\n\n"
+            f"sources: {sources}"
+        )
+
+    if "anderson" in question and "else matters" in question:
+        return (
+            "the important anderson-report thread is:\n\n"
+            "- the report is mostly ready, but may volunteer hours are still missing from jordan\n"
+            "- sarah should confirm the attendance total before the packet is locked\n"
+            "- one anonymized story still needs program-lead approval\n"
+            "- external export needs executive-director approval\n"
+            "- raw case notes stay blocked, even if they are useful for internal reasoning\n\n"
             f"sources: {sources}"
         )
 
