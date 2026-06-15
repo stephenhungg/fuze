@@ -14,7 +14,7 @@ Split-screen on GB10. Role dropdown: `program_manager` -> ask for donor SSN list
 ## 4. Six-Hour Punch List (≤360 min)
 - [ ] **Role switcher** in `web/index.html` + `X-Role` header — **30m**
 - [ ] **PolicyDenial with file:line citation** in `/query` (THE money shot) — **55m**
-- [ ] **GB10 status pill** (`/system/gb10` -> nvidia-smi + ollama ps) — **35m**
+- [x] **GB10 terminal proof** (`offline/gb10_proof.sh` -> hostname, nvidia-smi, service status, live `fuze-api` logs) — **35m**
 - [ ] **Streaming UI + live GPU meter** side panel (500ms refresh) — **40m**
 - [ ] **NemoClaw/OpenClaw adapter** swap (eligibility — non-negotiable) — **60m**
 - [ ] **Audit timeline view** (closing beat) — **40m**

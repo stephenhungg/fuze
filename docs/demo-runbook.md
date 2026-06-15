@@ -65,6 +65,31 @@ look for:
 - sse observability endpoint advertised
 - onboarding flow includes identity, docs, and agent activation
 
+## live dell proof
+
+for the judged demo, keep a terminal visible on the dell next to the browser:
+
+```bash
+cd ~/fuze
+./offline/gb10_proof.sh http://127.0.0.1:8000
+```
+
+what it proves:
+
+- the terminal is running on the dell user account and hostname
+- `nvidia-smi` shows the local nvidia gpu
+- `fuze-api`, `ollama`, and `fuze-qdrant` status are visible
+- `/health` comes from the local api
+- a real `/agent/run` request prints readiness, cloud calls, sources, blocks, tasks, and approvals
+- `journalctl -u fuze-api -f` tails live api logs while the browser demo runs
+
+stage setup:
+
+1. open the gb10 browser at `http://127.0.0.1:8000/app`
+2. open a terminal beside it and run `./offline/gb10_proof.sh`
+3. when the script enters watch mode, click `Run local agent` in the browser
+4. point at the terminal logs and say: "that request is being served by the dell, not a cloud llm. the audit packet still shows cloud calls at zero."
+
 ## identity proof
 
 in the left panel, use the identity selector:
