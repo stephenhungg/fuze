@@ -56,6 +56,16 @@ def test_health_reports_local_runtime_surfaces():
     assert data["always_on"]["enabled"] is True
 
 
+def test_static_seo_files_are_served_by_app():
+    robots = client.get("/robots.txt")
+    assert robots.status_code == 200
+    assert "Sitemap: https://fuze.stephenhung.me/sitemap.xml" in robots.text
+
+    sitemap = client.get("/sitemap.xml")
+    assert sitemap.status_code == 200
+    assert "https://fuze.stephenhung.me/app" in sitemap.text
+
+
 def test_demo_seed_reports_vector_memory_status():
     response = client.post("/demo/seed")
 

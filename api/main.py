@@ -166,6 +166,16 @@ def index() -> FileResponse:
     return FileResponse(WEB_DIR / "index.html")
 
 
+@app.get("/robots.txt")
+def robots() -> FileResponse:
+    return FileResponse(WEB_DIR / "robots.txt")
+
+
+@app.get("/sitemap.xml")
+def sitemap() -> FileResponse:
+    return FileResponse(WEB_DIR / "sitemap.xml")
+
+
 @app.get("/auth")
 @app.get("/admin/login")
 @app.get("/admin")
