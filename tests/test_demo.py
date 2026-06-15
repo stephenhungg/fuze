@@ -40,7 +40,7 @@ def test_agent_run_produces_hackathon_demo_packet():
     assert len(packet["funders"]) == 3
     assert len(packet["programs"]) == 3
     assert len(packet["metrics"]) == 4
-    assert "five required pieces" in data["response"]
+    assert "- required:" in data["response"]
     assert "meals served" in data["response"]
     assert "approval" in data["response"]
     assert "may volunteer hours" in packet["missing_info"][0]["label"]

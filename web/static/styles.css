@@ -945,6 +945,7 @@ tbody tr:hover {
   color: var(--text);
   font-size: 15px;
   line-height: 1.55;
+  white-space: pre-line;
 }
 
 .assistant-message {

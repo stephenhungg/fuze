@@ -152,32 +152,43 @@ def answer_goal(
         open_tasks = "; ".join(f"{task['owner']}: {task['title']}" for task in tasks[:3])
         approval_titles = "; ".join(approval["title"] for approval in approvals[:2])
         return (
-            "for the anderson report, fuze found five required pieces: "
-            f"{', '.join(requirements)}. meals, attendance, and budget variance are already supported by local evidence. "
-            f"{missing_line} the next actions are {open_tasks}. before anything leaves harbor light, approvals are queued for {approval_titles}. "
-            f"sources: {sources}."
+            "for the anderson report, fuze found:\n\n"
+            f"- required: {', '.join(requirements)}\n"
+            "- already supported: meals served, youth attendance, and budget variance\n"
+            f"- gap: {missing_line}\n"
+            f"- next actions: {open_tasks}\n"
+            f"- approvals before export: {approval_titles}\n\n"
+            f"sources: {sources}"
         )
 
     if any(term in question for term in ["who", "owner", "responsible"]):
         owners = sorted({task["owner"] for task in tasks})
         return (
-            f"the current owners are {', '.join(owners)}. jordan owns the missing volunteer-hours update, sarah owns attendance confirmation, "
-            "and program leadership owns story approval. fuze will keep raw case notes blocked for external output."
+            "current owners:\n\n"
+            f"- active owners: {', '.join(owners)}\n"
+            "- jordan: missing volunteer-hours update\n"
+            "- sarah: attendance confirmation\n"
+            "- program leadership: story approval\n\n"
+            "raw case notes stay blocked for external output."
         )
 
     if any(term in question for term in ["draft", "email", "write", "send"]):
         followups = report["followups"]
         first = followups[0]
         return (
-            f"i can draft that inside fuze. the first safe follow-up is to {first['to']}: {first['subject']}. "
-            f"external export still needs approval, and sensitive story/case-note content stays blocked unless reviewed."
+            "i can draft that inside fuze.\n\n"
+            f"- first safe follow-up: {first['to']} — {first['subject']}\n"
+            "- external export still needs approval\n"
+            "- sensitive story/case-note content stays blocked unless reviewed"
         )
 
     context_titles = "; ".join(item["title"] for item in context["allowed_context"][:3])
     return (
-        f"i checked the local context core and found relevant evidence in {context_titles}. "
-        f"{missing_line} there are {len(tasks)} open workflow tasks and {len(approvals)} approval gate(s). "
-        f"sources: {sources}."
+        "i checked the local context core.\n\n"
+        f"- relevant evidence: {context_titles}\n"
+        f"- gap: {missing_line or 'none found in this packet'}\n"
+        f"- workflow: {len(tasks)} open task(s), {len(approvals)} approval gate(s)\n\n"
+        f"sources: {sources}"
     )
 
 
