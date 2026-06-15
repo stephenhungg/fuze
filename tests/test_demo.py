@@ -58,6 +58,18 @@ def test_health_reports_local_runtime_surfaces():
     assert data["always_on"]["enabled"] is True
 
 
+def test_agent_audit_exposes_local_inference_probe_state():
+    response = client.post(
+        "/agent/run",
+        json={"goal": "get us ready for the anderson foundation report", "role": "grant_manager"},
+    )
+
+    assert response.status_code == 200
+    probe = response.json()["audit"]["model_runtime"]["local_inference"]
+    assert probe["model"] == "qwen3:8b"
+    assert "cloud_calls" not in probe or probe["cloud_calls"] == 0
+
+
 def test_system_runtime_is_honest_about_gb10_boundary():
     response = client.get("/system/runtime")
 

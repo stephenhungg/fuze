@@ -11,6 +11,9 @@ import httpx
 GB10_RUNTIME_URL = os.getenv("FUZE_GB10_RUNTIME_URL", "").rstrip("/")
 GB10_RUNTIME_TOKEN = os.getenv("FUZE_GB10_RUNTIME_TOKEN", "")
 HOSTED_PREVIEW = os.getenv("VERCEL") == "1" or os.getenv("FUZE_HOSTED_PREVIEW", "0") == "1"
+OLLAMA_HOST = os.getenv("OLLAMA_HOST", "http://127.0.0.1:11434")
+LOCAL_LLM_MODEL = os.getenv("FUZE_LOCAL_LLM_MODEL", "qwen3:8b")
+LOCAL_LLM_ENABLED = os.getenv("FUZE_ENABLE_LOCAL_LLM", "0") == "1"
 
 
 def configured() -> bool:
@@ -114,3 +117,52 @@ def local_execution_mode() -> dict[str, Any]:
         "provider": "deterministic demo engine",
         "inference": "none; responses are assembled from synthetic sample data",
     }
+
+
+def local_inference_probe(goal: str, readiness_score: int | None = None) -> dict[str, Any]:
+    """optionally prove a local ollama model generated text on this machine."""
+    if not LOCAL_LLM_ENABLED:
+        return {
+            "enabled": False,
+            "available": False,
+            "model": LOCAL_LLM_MODEL,
+            "reason": "set FUZE_ENABLE_LOCAL_LLM=1 on the runtime host to force a local generation proof",
+        }
+
+    prompt = (
+        "You are fuze, a local nonprofit grant-readiness agent. "
+        "Write one short audit sentence proving this run happened locally. "
+        f"Goal: {goal}. Readiness score: {readiness_score}."
+    )
+    try:
+        with httpx.Client(timeout=25) as client:
+            response = client.post(
+                f"{OLLAMA_HOST}/api/generate",
+                json={
+                    "model": LOCAL_LLM_MODEL,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": 0, "num_predict": 48},
+                },
+            )
+            response.raise_for_status()
+        payload = response.json()
+        return {
+            "enabled": True,
+            "available": True,
+            "provider": "ollama",
+            "host": OLLAMA_HOST,
+            "model": LOCAL_LLM_MODEL,
+            "response": payload.get("response", "").strip(),
+            "cloud_calls": 0,
+        }
+    except Exception as exc:
+        return {
+            "enabled": True,
+            "available": False,
+            "provider": "ollama",
+            "host": OLLAMA_HOST,
+            "model": LOCAL_LLM_MODEL,
+            "error": str(exc),
+            "cloud_calls": 0,
+        }

@@ -133,6 +133,7 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str |
     report = prepare_report(context)
     approvals = create_approvals(context, report)
     execution = runtime.local_execution_mode()
+    inference_probe = runtime.local_inference_probe(goal, context.get("readiness_score"))
     audit = {
         "id": f"audit-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -159,6 +160,7 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str |
             "routing_model": "qwen3:8b",
             "planning_model": "qwen3:14b",
             "embedding_model": "nomic-embed-text",
+            "local_inference": inference_probe,
             "cloud_calls": 0,
         },
         "identity_runtime": {
