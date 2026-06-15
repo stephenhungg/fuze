@@ -1022,6 +1022,23 @@ tbody tr:hover {
   border-top: 1px solid var(--line);
 }
 
+.new-chat-btn {
+  width: 100%;
+  min-height: 38px;
+  margin: 16px 0 12px;
+  border: 1px solid var(--text);
+  padding: 9px 11px;
+  background: var(--text);
+  color: #ffffff;
+  font-weight: 700;
+  text-align: left;
+}
+
+.new-chat-btn:hover {
+  border-color: var(--orange);
+  background: var(--orange);
+}
+
 .thread-item {
   display: block;
   width: 100%;

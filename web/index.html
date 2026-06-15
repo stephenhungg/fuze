@@ -454,34 +454,23 @@
 
             <div class="rail-section">
               <span class="section-kicker">Current thread</span>
-              <strong>Anderson Foundation report</strong>
+              <strong id="current-thread-title">New chat</strong>
               <p>Private context stays on the local appliance.</p>
             </div>
+
+            <button id="new-chat-btn" class="new-chat-btn" type="button">New chat</button>
 
             <label for="user-select">Identity</label>
             <select id="user-select"></select>
 
-            <div class="thread-list" aria-label="threads">
-              <button class="thread-item active" type="button">
-                <span>Grant report</span>
-                <strong>72% ready</strong>
-              </button>
-              <button class="thread-item" type="button">
-                <span>Volunteer hours</span>
-                <strong>Waiting on Jordan</strong>
-              </button>
-              <button class="thread-item" type="button">
-                <span>Story approval</span>
-                <strong>Needs program lead</strong>
-              </button>
-            </div>
+            <div id="thread-list" class="thread-list" aria-label="threads"></div>
           </aside>
 
           <section class="panel chat-main">
             <header class="chat-header">
               <div>
                 <span class="section-kicker">Chat</span>
-                <h2>Anderson Foundation report</h2>
+                <h2 id="chat-title">New chat</h2>
               </div>
               <div class="topbar-status">
                 <span id="confidence" class="pill">idle</span>
@@ -492,12 +481,12 @@
             <div id="chat-thread" class="chat-thread" aria-live="polite">
               <article class="message assistant-message">
                 <span>fuze</span>
-                <p>Ask me what needs to happen for the Anderson Foundation report. I’ll use local context, respect role policy, and queue approvals before anything leaves the org.</p>
+                <p>Start a new question. I’ll use local context, respect role policy, and queue approvals before anything leaves the org.</p>
               </article>
             </div>
 
             <form id="chat-form" class="composer">
-              <textarea id="goal">get us ready for the anderson foundation report</textarea>
+              <textarea id="goal" placeholder="Ask fuze anything about the organization"></textarea>
               <button id="run-btn" type="submit">Send</button>
             </form>
           </section>

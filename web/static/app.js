@@ -47,7 +47,13 @@ const adminAuthForm = document.querySelector("#admin-auth-form");
 const adminUser = document.querySelector("#admin-user");
 const chatForm = document.querySelector("#chat-form");
 const chatThread = document.querySelector("#chat-thread");
+const threadList = document.querySelector("#thread-list");
+const newChatBtn = document.querySelector("#new-chat-btn");
+const currentThreadTitle = document.querySelector("#current-thread-title");
+const chatTitle = document.querySelector("#chat-title");
 let previewMode = false;
+let chatThreads = [];
+let activeThreadId = null;
 
 function card(title, body, extra = "") {
   return `<article class="card"><strong>${escapeHtml(sentenceCase(title))}</strong><p>${escapeHtml(body)}</p>${extra}</article>`;
@@ -85,6 +91,81 @@ function setCloudCalls(value) {
   cloudCallEls.forEach((element) => {
     element.textContent = value;
   });
+}
+
+function createThread(title = "New chat") {
+  const thread = {
+    id: `thread-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    title,
+    status: "Ready",
+    messages: [
+      {
+        role: "assistant",
+        label: "fuze",
+        text: "Start a new question. I’ll use local context, respect role policy, and queue approvals before anything leaves the org.",
+      },
+    ],
+  };
+  chatThreads = [thread, ...chatThreads].slice(0, 8);
+  activeThreadId = thread.id;
+  renderThreadList();
+  renderActiveThread();
+  return thread;
+}
+
+function activeThread() {
+  return chatThreads.find((thread) => thread.id === activeThreadId) || chatThreads[0];
+}
+
+function shortTitle(text) {
+  const trimmed = String(text || "").trim();
+  if (!trimmed) return "New chat";
+  return trimmed.length > 34 ? `${trimmed.slice(0, 31)}...` : trimmed;
+}
+
+function renderThreadList() {
+  if (!threadList) return;
+  if (!chatThreads.length) createThread();
+  threadList.innerHTML = chatThreads
+    .map(
+      (thread) =>
+        `<button class="thread-item ${thread.id === activeThreadId ? "active" : ""}" type="button" data-thread-id="${escapeHtml(thread.id)}">
+          <span>${escapeHtml(thread.title)}</span>
+          <strong>${escapeHtml(thread.status)}</strong>
+        </button>`,
+    )
+    .join("");
+}
+
+function renderActiveThread() {
+  const thread = activeThread();
+  if (!thread || !chatThread) return;
+  if (currentThreadTitle) currentThreadTitle.textContent = thread.title;
+  if (chatTitle) chatTitle.textContent = thread.title;
+  chatThread.innerHTML = thread.messages
+    .map(
+      (message) =>
+        `<article class="message ${message.role === "user" ? "user-message" : message.role === "system" ? "system-message" : "assistant-message"}">
+          <span>${escapeHtml(message.label)}</span>
+          <p>${escapeHtml(message.text)}</p>
+        </article>`,
+    )
+    .join("");
+  chatThread.scrollTop = chatThread.scrollHeight;
+  animateChat();
+}
+
+function pushMessage(role, label, text) {
+  let thread = activeThread();
+  if (!thread) thread = createThread();
+  thread.messages.push({ role, label, text });
+  renderActiveThread();
+}
+
+function startNewChat() {
+  createThread();
+  if (goalInput) goalInput.value = "";
+  if (confidence) confidence.textContent = "idle";
 }
 
 async function getJson(url, options = {}) {
@@ -464,7 +545,7 @@ async function loadUsers() {
   userSelect.value = localStorage.getItem("fuze-user") || "morgan";
 }
 
-function render(result) {
+function render(result, options = {}) {
   const packet = result.context_packet;
   skill.textContent = packet.skill_label;
   role.textContent = packet.role;
@@ -472,7 +553,9 @@ function render(result) {
   scoreBar.value = packet.readiness_score;
   confidence.textContent = packet.confidence;
   renderStaffBrief(result);
-  renderChat(result);
+  if (options.updateChat !== false) {
+    renderChat(result);
+  }
 
   identityCard.innerHTML = linesCard("Identity adapter", [
     `${packet.user.name} · ${packet.user.title}`,
@@ -559,6 +642,18 @@ function renderChat(result) {
     `<article class="message system-message"><span>local context</span><p>${escapeHtml(`cloud calls: ${result.audit.model_runtime.cloud_calls}; sources: ${sourceNames}`)}</p></article>`,
   ].join("");
   animateChat();
+}
+
+function assistantReplyFromResult(result) {
+  const packet = result.context_packet;
+  const pendingApprovals = result.approvals.filter((approval) => approval.status === "pending").length;
+  const urgentTasks = result.tasks.filter((task) => task.priority === "high").length;
+  const missing = packet.missing_info[0];
+  const runtime = result.audit.model_runtime;
+  const answer = result.response
+    ? result.response
+    : `You are ${packet.readiness_score}% ready. I found ${urgentTasks} urgent task${urgentTasks === 1 ? "" : "s"}, ${pendingApprovals} approval gate${pendingApprovals === 1 ? "" : "s"}, and ${missing ? `one missing update from ${missing.owner}` : "no missing owner update"}.`;
+  return `${answer}\n\nlocal proof: ${runtime.provider}; cloud calls ${runtime.cloud_calls}.`;
 }
 
 function renderStaffBrief(result) {
@@ -861,8 +956,22 @@ async function decideApproval(id, status, button) {
 }
 
 async function runAgent() {
+  const goal = goalInput.value.trim();
+  if (!goal) {
+    goalInput.focus();
+    return;
+  }
+  let thread = activeThread();
+  if (!thread) thread = createThread();
+  if (thread.title === "New chat") {
+    thread.title = shortTitle(goal);
+  }
+  thread.status = "Running";
+  renderThreadList();
+  pushMessage("user", userSelect.selectedOptions[0]?.textContent?.split(" · ")[0] || "you", goal);
+  pushMessage("system", "local runtime", "routing to the gb10 agent runtime...");
   runBtn.disabled = true;
-  runBtn.textContent = "Running locally...";
+  runBtn.textContent = "Sending...";
   try {
     const selectedUser = userSelect.value || "morgan";
     const selectedRole = userSelect.selectedOptions[0]?.dataset.role || "grant_manager";
@@ -870,16 +979,16 @@ async function runAgent() {
     const ingestion = await getJson("/ingestion/run", { method: "POST" });
     const result = await getJson("/agent/run", {
       method: "POST",
-      body: JSON.stringify({ goal: goalInput.value, role: selectedRole, user_id: selectedUser }),
+      body: JSON.stringify({ goal, role: selectedRole, user_id: selectedUser }),
     });
     const vector = await getJson("/tools/vector_search", {
       method: "POST",
-      body: JSON.stringify({ query: goalInput.value, limit: 3 }),
+      body: JSON.stringify({ query: goal, limit: 3 }),
     });
     const context = await getJson("/context/query", {
       method: "POST",
       body: JSON.stringify({
-        question: goalInput.value,
+        question: goal,
         role: selectedRole,
         user_id: selectedUser,
         external: true,
@@ -892,7 +1001,15 @@ async function runAgent() {
     const accessPreview = await getJson(`/identity/access-preview/${encodeURIComponent(selectedUser)}`);
     const mesh = await getJson("/agents/status");
     previewMode = false;
-    render(result);
+    render(result, { updateChat: false });
+    const updatedThread = activeThread();
+    if (updatedThread) {
+      updatedThread.messages = updatedThread.messages.filter((message) => message.text !== "routing to the gb10 agent runtime...");
+      updatedThread.status = `${result.context_packet.readiness_score}% ready`;
+    }
+    pushMessage("assistant", "fuze", assistantReplyFromResult(result));
+    renderThreadList();
+    goalInput.value = "";
     renderIngestion(ingestion);
     renderContextCore(context);
     renderDirectory(directory, accessPreview);
@@ -912,11 +1029,17 @@ async function runAgent() {
     );
     renderContextEval(evalResult);
   } catch (error) {
-    renderPreview();
+    const failedThread = activeThread();
+    if (failedThread) {
+      failedThread.messages = failedThread.messages.filter((message) => message.text !== "routing to the gb10 agent runtime...");
+      failedThread.status = "Failed";
+    }
+    pushMessage("assistant", "fuze", `That request failed: ${error.message}. The local preview state is still available, but the backend call did not complete.`);
+    renderThreadList();
     sseStatus.textContent = "preview";
   } finally {
     runBtn.disabled = false;
-    runBtn.textContent = "Run local agent";
+    runBtn.textContent = "Send";
   }
 }
 
@@ -991,9 +1114,18 @@ chatForm?.addEventListener("submit", (event) => {
 if (!chatForm) {
   runBtn.addEventListener("click", runAgent);
 }
+newChatBtn?.addEventListener("click", () => {
+  startNewChat();
+});
+threadList?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-thread-id]");
+  if (!button) return;
+  activeThreadId = button.dataset.threadId;
+  renderThreadList();
+  renderActiveThread();
+});
 userSelect.addEventListener("change", () => {
   localStorage.setItem("fuze-user", userSelect.value);
-  runAgent();
 });
 approvalsPanel.addEventListener("click", (event) => {
   const button = event.target.closest("[data-approval][data-decision]");
@@ -1006,7 +1138,8 @@ onboardingRunBtn?.addEventListener("click", () => {
   runOnboardingSetup();
 });
 renderRoute();
-loadUsers().then(runAgent).catch(() => {
+startNewChat();
+loadUsers().catch(() => {
   renderPreview();
 });
 loadHealth().catch(() => {
