@@ -1,5 +1,17 @@
 # todo
 
+- [x] replace the root landing page with the supplied architectural landing direction
+- [x] keep workspace routing and chat interface unchanged
+- [ ] verify locally, deploy, and smoke-test production
+
+## current landing update
+
+- scope the zip's visual system to `/` only: dark architectural surface, sharp grid, large type, orange accent.
+- adapt the content to fuze's local-first nonprofit appliance story instead of the template's agency copy.
+- avoid remote landing assets so the page stays aligned with the offline/local-first demo.
+- generated a local hero bitmap for the landing and preserved the reference motion language with gsap reveal, stagger, counters, and parallax.
+- matched the palette reference: vibrant orange, off-white, grey sand, deep taupe, and pitch black.
+
 - [x] inspect current retrieval, vector memory, and graph boundaries
 - [x] add local context core query contract for agent-to-agent retrieval
 - [x] rank vector hits, traverse graph nodes, and return a policy-filtered context packet

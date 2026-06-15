@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>fuze</title>
-    <link rel="stylesheet" href="/static/styles.css?v=linear-admin-sharp" />
+    <link rel="stylesheet" href="/static/styles.css?v=asset-motion-v2" />
   </head>
   <body>
     <header class="site-nav">
@@ -22,42 +22,75 @@
     </header>
 
     <main>
-      <section id="landing-route" class="route-view landing-route" data-route-view="/">
-        <div class="landing-hero">
-          <div>
-            <span class="section-kicker">Local-first agent operations</span>
-            <h1>fuze runs nonprofit workflows without sending private context to cloud LLMs.</h1>
-            <p>
-              Connect identity, ingest documents, keep a local context core warm, and let always-on agents surface work that staff can actually approve.
-            </p>
-            <div class="hero-actions">
-              <a class="button primary" href="/auth" data-route="/auth">Start with auth</a>
-              <a class="button" href="/app" data-route="/app">Open demo workspace</a>
+      <section id="landing-route" class="route-view landing-route landing-architectural" data-route-view="/">
+        <div class="landing-frame">
+          <section class="landing-hero">
+            <div class="landing-brief">
+              <span class="landing-kicker">Local-first agent appliance</span>
+              <h2>Built for nonprofit teams that cannot babysit software.</h2>
+              <p>
+                fuze turns a Dell GB10 into an always-on local agent hub for identity-aware context, document ingestion, approval gates, and staff-ready workflows.
+              </p>
+              <div class="landing-mini-proof" aria-label="runtime proof">
+                <div><span>Cloud LLM calls</span><strong data-count-to="0">0</strong></div>
+                <div><span>Policy blocks</span><strong data-count-to="36">0</strong></div>
+                <div><span>Readiness</span><strong><span data-count-to="72">0</span>%</strong></div>
+                <div><span>Model host</span><strong>GB10</strong></div>
+              </div>
             </div>
-          </div>
-          <div class="landing-proof" aria-label="demo proof">
-            <div><span>Cloud LLM calls</span><strong>0</strong></div>
-            <div><span>Readiness</span><strong>72%</strong></div>
-            <div><span>Policy blocks</span><strong>36</strong></div>
-          </div>
-        </div>
 
-        <div class="landing-grid">
-          <article>
-            <span>1</span>
-            <strong>Identity first</strong>
-            <p>Users enter through SSO-style auth, group mapping, and role-aware permissions before any context is returned.</p>
-          </article>
-          <article>
-            <span>2</span>
-            <strong>Local context core</strong>
-            <p>Documents become graph-linked memory with dense, lexical, and traversal signals fused before prompt assembly.</p>
-          </article>
-          <article>
-            <span>3</span>
-            <strong>Human approval gates</strong>
-            <p>Agents can run continuously, but exports, sensitive stories, and funder-facing drafts wait for the right role.</p>
-          </article>
+            <div class="landing-statement">
+              <div class="landing-title-block">
+                <span>fuze</span>
+                <h1>Local context before agent action.</h1>
+              </div>
+              <img
+                class="landing-hero-asset"
+                src="/static/assets/fuze-local-agent-appliance.png"
+                alt="dark local agent appliance with context graph and orange signal paths"
+              />
+              <div class="landing-visual" aria-hidden="true">
+                <div class="landing-node node-core">context core</div>
+                <div class="landing-node node-policy">policy</div>
+                <div class="landing-node node-agent">agents</div>
+                <div class="landing-node node-staff">staff</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="landing-band">
+            <div>
+              <span class="landing-kicker">Operating loop</span>
+              <h2>Ingest. retrieve. act. prove.</h2>
+            </div>
+            <div class="landing-actions">
+              <a class="landing-button primary" href="/auth" data-route="/auth">Start with auth</a>
+              <a class="landing-button" href="/app" data-route="/app">Open workspace</a>
+            </div>
+          </section>
+
+          <section class="landing-system-grid" aria-label="fuze system">
+            <article>
+              <span>01</span>
+              <strong>Directory-aware from the first click</strong>
+              <p>Users enter through SSO-style auth, group mapping, and role checks before private context is assembled.</p>
+            </article>
+            <article>
+              <span>02</span>
+              <strong>Graph retrieval instead of basic RAG</strong>
+              <p>Dense, lexical, and graph traversal signals fuse into a policy-filtered packet agents can query locally.</p>
+            </article>
+            <article>
+              <span>03</span>
+              <strong>Always-on agents with approval gates</strong>
+              <p>Long-running jobs find missing work, draft follow-ups, and pause before funder-facing or sensitive outputs.</p>
+            </article>
+            <article>
+              <span>04</span>
+              <strong>Observability for nontechnical teams</strong>
+              <p>SSE events, audit trails, local runtime proof, and role decisions stay visible without admin-console chaos.</p>
+            </article>
+          </section>
         </div>
       </section>
 
@@ -309,6 +342,6 @@
       </section>
     </main>
     <script src="/static/vendor/gsap.min.js?v=3.12.5-local"></script>
-    <script src="/static/app.js?v=chat-gsap"></script>
+    <script src="/static/app.js?v=asset-motion-v2"></script>
   </body>
 </html>

@@ -127,16 +127,22 @@ function animateRoute(route) {
   if (!canAnimate()) return;
   const view = document.querySelector(`[data-route-view="${route}"]`);
   if (!view) return;
+  window.gsap.killTweensOf(view.querySelectorAll("[data-count-to], .landing-hero-asset, .landing-node"));
   window.gsap.fromTo(
     view,
     { autoAlpha: 0, y: 8 },
     { autoAlpha: 1, y: 0, duration: 0.28, ease: "power2.out", overwrite: "auto" },
   );
   window.gsap.fromTo(
-    view.querySelectorAll(".message, .landing-grid article, .onboarding-board article, .admin-section, .auth-panel, .auth-side"),
+    view.querySelectorAll(
+      ".message, .landing-brief, .landing-statement, .landing-band, .landing-system-grid article, .onboarding-board article, .admin-section, .auth-panel, .auth-side",
+    ),
     { autoAlpha: 0, y: 10 },
     { autoAlpha: 1, y: 0, duration: 0.32, stagger: 0.035, ease: "power2.out", overwrite: "auto" },
   );
+  if (route === "/") {
+    animateLanding(view);
+  }
 }
 
 function animateChat() {
@@ -146,6 +152,54 @@ function animateChat() {
     { autoAlpha: 0, y: 8 },
     { autoAlpha: 1, y: 0, duration: 0.24, stagger: 0.04, ease: "power2.out", overwrite: "auto" },
   );
+}
+
+function animateLanding(view) {
+  const image = view.querySelector(".landing-hero-asset");
+  const nodes = view.querySelectorAll(".landing-node");
+
+  if (image) {
+    window.gsap.fromTo(
+      image,
+      { scale: 1.1, x: 18, autoAlpha: 0.68 },
+      { scale: 1.04, x: 0, autoAlpha: 1, duration: 1.1, ease: "power3.out", overwrite: "auto" },
+    );
+  }
+
+  window.gsap.fromTo(
+    nodes,
+    { autoAlpha: 0, y: 14 },
+    { autoAlpha: 1, y: 0, duration: 0.55, stagger: 0.08, delay: 0.18, ease: "power2.out", overwrite: "auto" },
+  );
+
+  view.querySelectorAll("[data-count-to]").forEach((element) => {
+    const target = Number(element.dataset.countTo || 0);
+    const state = { value: 0 };
+    window.gsap.to(state, {
+      value: target,
+      duration: 0.9,
+      delay: 0.12,
+      ease: "power2.out",
+      overwrite: "auto",
+      onUpdate: () => {
+        element.textContent = String(Math.round(state.value));
+      },
+    });
+  });
+}
+
+function updateLandingParallax() {
+  if (!canAnimate() || document.body.dataset.currentRoute !== "landing") return;
+  const image = document.querySelector(".landing-hero-asset");
+  if (!image) return;
+  const progress = Math.min(window.scrollY / Math.max(window.innerHeight, 1), 1);
+  window.gsap.to(image, {
+    y: progress * 24,
+    scale: 1.04 + progress * 0.025,
+    duration: 0.28,
+    ease: "power2.out",
+    overwrite: "auto",
+  });
 }
 
 const previewUsers = [
@@ -740,6 +794,8 @@ routeLinks.forEach((link) => {
 window.addEventListener("popstate", () => {
   renderRoute();
 });
+
+window.addEventListener("scroll", updateLandingParallax, { passive: true });
 
 authForm?.addEventListener("submit", (event) => {
   event.preventDefault();
