@@ -236,7 +236,7 @@ async def health() -> dict[str, Any]:
         "mode": gb10["execution"],
         "cloud_llm_calls": 0,
         "runtime": {
-            "hosted_preview": not gb10["configured"],
+            "hosted_preview": gb10["execution"] == "hosted_preview",
             "gb10": gb10,
         },
         "ollama": await ollama_status(),
