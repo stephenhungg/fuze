@@ -25,6 +25,9 @@ const eventCount = document.querySelector("#event-count");
 const policyCount = document.querySelector("#policy-count");
 const approvalCount = document.querySelector("#approval-count");
 const onboardingFlow = document.querySelector("#onboarding-flow");
+const onboardingRuntime = document.querySelector("#onboarding-runtime");
+const onboardingConnectors = document.querySelector("#onboarding-connectors");
+const onboardingPersonalAgents = document.querySelector("#onboarding-personal-agents");
 const graph = document.querySelector("#graph");
 const blocked = document.querySelector("#blocked");
 const score = document.querySelector("#score");
@@ -635,6 +638,7 @@ function renderObservability(summary) {
 }
 
 function renderOnboarding(data) {
+  if (!onboardingFlow) return;
   onboardingFlow.innerHTML = data.flow
     .map((step) =>
       linesCard(
@@ -644,6 +648,72 @@ function renderOnboarding(data) {
       ),
     )
     .join("");
+
+  const runtime = data.personal_agent_runtime || {};
+  if (onboardingRuntime) {
+    onboardingRuntime.innerHTML = [
+      linesCard("Identity", [
+        `login: ${data.identity_management.login.join(" or ")}`,
+        `provisioning: ${data.identity_management.provisioning.join(", ")}`,
+        `directory sync: ${data.identity_management.directory_sync.slice(0, 2).join(", ")}`,
+      ]),
+      linesCard("Agent runtime", [
+        runtime.model || "shared local runtime",
+        `home root: ${runtime.home_root || "/var/lib/fuze/agents"}`,
+        "bash env, mcp config, scoped workspace, skills, cron, logs, and audit",
+      ]),
+      linesCard("Security policy", (runtime.security || []).slice(0, 4)),
+    ].join("");
+  }
+}
+
+function renderOnboardingConnectors(data) {
+  if (!onboardingConnectors) return;
+  const connectors = data.connectors || [];
+  const metrics = data.metrics || [];
+  onboardingConnectors.innerHTML = [
+    ...connectors.map((connector) =>
+      linesCard(connector.label, [
+        `${connector.status} · ${connector.change_detection || "watched source"}`,
+        connector.scope || "workspace knowledge source",
+        `last sync: ${connector.last_sync || "preview"}`,
+      ]),
+    ),
+    linesCard(
+      "Sample data after ingest",
+      [
+        `${data.files_seen || 0} files · ${data.chunks_created || 0} chunks`,
+        `${data.pii_chunks || 0} pii chunks · ${(data.restricted_files || []).join(", ")}`,
+        `${metrics.length} operating metrics available to context core`,
+      ],
+      `<span class="tag">local qdrant + graph</span>`,
+    ),
+  ].join("");
+}
+
+function renderOnboardingPersonalAgents(data) {
+  if (!onboardingPersonalAgents) return;
+  const agents = (data.agents || []).slice(0, 4);
+  onboardingPersonalAgents.innerHTML = [
+    ...agents.map((agent) =>
+      linesCard(
+        agent.user.name,
+        [
+          `${agent.user.role} · ${agent.status}`,
+          `workspace: ${agent.paths.workspace}`,
+          `mcp: ${agent.mcp_servers.map((server) => server.id).slice(0, 4).join(", ")}`,
+          `skills: ${agent.skills.map((skillItem) => skillItem.id).slice(0, 4).join(", ")}`,
+        ],
+        `<span class="tag">bash · web search · cron</span>`,
+      ),
+    ),
+    linesCard("Shared gb10 services", [
+      data.ram_strategy || "shared local inference",
+      `ollama: ${data.shared_services?.ollama || "local"}`,
+      `qdrant: ${data.shared_services?.qdrant || "local"}`,
+      `cloud calls: ${data.cloud_llm_calls ?? 0}`,
+    ]),
+  ].join("");
 }
 
 function renderDirectory(data, preview) {
@@ -882,6 +952,25 @@ loadHealth().catch(() => {
 });
 getJson("/onboarding/flow").then(renderOnboarding).catch(() => {
   onboardingFlow.innerHTML = card("Onboarding unavailable", "Admin flow did not load.");
+});
+Promise.all([getJson("/ingestion/status"), getJson("/demo/snapshot")])
+  .then(([ingestion, seed]) => renderOnboardingConnectors({ ...ingestion, connectors: seed.snapshot.connectors, metrics: seed.snapshot.metrics }))
+  .catch(() => {
+    renderOnboardingConnectors({ ...previewIngestion, connectors: previewResult.context_packet.connectors, metrics: previewResult.context_packet.metrics });
+  });
+getJson("/personal-agents").then(renderOnboardingPersonalAgents).catch(() => {
+  renderOnboardingPersonalAgents({
+    ...previewMesh.personal_agents,
+    agents: previewUsers.map((user) => ({
+      user,
+      status: "planned",
+      paths: { workspace: `/var/lib/fuze/agents/${user.id}/workspace` },
+      mcp_servers: [{ id: "fuze-context-core" }, { id: "fuze-bash" }, { id: "fuze-web-search" }],
+      skills: [{ id: user.role === "grant_manager" ? "nonprofit_grants" : "daily_brief" }],
+    })),
+    shared_services: { ollama: "local", qdrant: "local" },
+    cloud_llm_calls: 0,
+  });
 });
 Promise.all([getJson("/identity/directory"), getJson("/identity/access-preview/morgan")])
   .then(([directory, preview]) => renderDirectory(directory, preview))

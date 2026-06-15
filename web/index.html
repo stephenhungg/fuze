@@ -390,16 +390,56 @@
       <section id="onboarding-route" class="route-view onboarding-route" data-route-view="/onboarding">
         <div class="route-heading">
           <span class="section-kicker">Onboarding</span>
-          <h1>Go from empty box to usable agent workspace.</h1>
-          <p>Set identity, connect docs, review policy, seed memory, then activate the always-on agent loop.</p>
+          <h1>Go from empty box to governed agents.</h1>
+          <p>Connect identity, connect knowledge, map permissions, then provision personal agents that can work inside the company boundary.</p>
         </div>
-        <div class="onboarding-board">
-          <article><span>01</span><strong>Connect identity</strong><p>Choose Entra, Okta, or Google Workspace. Map groups to roles and preview access for each user.</p></article>
-          <article><span>02</span><strong>Ingest documents</strong><p>Bring in SharePoint, Drive, CRM exports, and restricted folders. PII is tagged before retrieval.</p></article>
-          <article><span>03</span><strong>Build context graph</strong><p>Create local embeddings, lexical indexes, and org graph edges for funders, staff, programs, and policies.</p></article>
-          <article><span>04</span><strong>Turn agents on</strong><p>Start the always-on monitor and stream agent events into the workspace observability panel.</p></article>
+
+        <div class="onboarding-outcome">
+          <article><span>Buyer promise</span><strong>one local appliance, every staff member gets a governed ai coworker</strong></article>
+          <article><span>Demo org</span><strong>Harbor Light Community Services</strong></article>
+          <article><span>Runtime</span><strong>dell gb10, ollama, qdrant, context core, cloud calls 0</strong></article>
         </div>
-        <a class="button primary" href="/app" data-route="/app">Open configured workspace</a>
+
+        <div class="onboarding-layout">
+          <section>
+            <div class="section-row">
+              <h2>Setup path</h2>
+              <p>what an admin actually does before staff start using fuze.</p>
+            </div>
+            <div id="onboarding-flow" class="onboarding-board"></div>
+          </section>
+
+          <aside class="onboarding-side">
+            <div class="section-row">
+              <h2>What gets created</h2>
+              <p>the concrete runtime objects behind the product story.</p>
+            </div>
+            <div id="onboarding-runtime"></div>
+          </aside>
+        </div>
+
+        <div class="onboarding-layout secondary">
+          <section>
+            <div class="section-row">
+              <h2>Connected knowledge</h2>
+              <p>sample nonprofit systems that become local context.</p>
+            </div>
+            <div id="onboarding-connectors" class="route-list"></div>
+          </section>
+
+          <section>
+            <div class="section-row">
+              <h2>Personal agents</h2>
+              <p>employee-scoped workers with bash, mcp tools, skills, cron, and audit.</p>
+            </div>
+            <div id="onboarding-personal-agents" class="route-list"></div>
+          </section>
+        </div>
+
+        <div class="onboarding-actions">
+          <a class="button primary" href="/app" data-route="/app">Open staff chat</a>
+          <a class="button" href="/admin/login" data-route="/admin/login">Open admin</a>
+        </div>
       </section>
 
       <section id="app-route" class="route-view app-route" data-route-view="/app">
@@ -471,7 +511,7 @@
           <div id="tasks" class="tab-panel active"></div><div id="drafts" class="tab-panel"></div><div id="approvals" class="tab-panel"></div><div id="audit" class="tab-panel"></div>
           <div id="agent-stream"></div><div id="context-core"></div><div id="graph"></div><div id="blocked"></div><div id="directory-management"></div>
           <div id="identity-card"></div><div id="org-profile"></div><div id="context-list"></div><div id="ingestion-status"></div><div id="vector-memory"></div>
-          <div id="pitch-proof"></div><div id="agent-mesh"></div><div id="onboarding-flow"></div>
+          <div id="pitch-proof"></div><div id="agent-mesh"></div><div id="onboarding-flow-cache"></div>
         </div>
       </section>
     </main>

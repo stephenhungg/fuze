@@ -275,6 +275,13 @@ async def seed() -> dict[str, Any]:
     return {"status": "seeded", "snapshot": snapshot, "vector_seed": vector_seed}
 
 
+@app.get("/demo/snapshot")
+async def demo_snapshot() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/demo/snapshot")
+    return {"snapshot": store.snapshot()}
+
+
 @app.post("/agent/run")
 async def run_agent(request: GoalRequest) -> dict[str, Any]:
     if runtime.configured():

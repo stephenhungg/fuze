@@ -12,6 +12,14 @@
 - the runtime contract must include bash env, workspace folders, mcp/tool registry, web search policy, cron/heartbeat, skills, quotas, audit, and rbac.
 - local verification: `python3 -m pytest -q` passes with 27 tests.
 
+## onboarding page fix
+
+- [x] replace static four-card onboarding page with visible dynamic setup flow
+- [x] show buyer promise, demo org, runtime proof, connected systems, and personal agents
+- [x] fix hidden `#onboarding-flow` bug so the rendered api data is actually visible
+- [x] add read-only `/demo/snapshot` for onboarding data without mutating seed state
+- local verification: `python3 -m pytest -q` passes with 28 tests and browser check shows setup/runtime/connector/personal-agent cards.
+
 - [x] audit current production-to-dell security posture
 - [x] document hipaa/soc2 readiness gaps and secure connectivity plan
 - [x] patch misleading gb10 production copy

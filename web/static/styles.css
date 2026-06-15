@@ -491,6 +491,72 @@ body[data-current-route="landing"] .site-nav a:not(.brand-link):hover {
   margin-top: 8px;
 }
 
+.onboarding-outcome {
+  display: grid;
+  grid-template-columns: 1.1fr 0.8fr 1fr;
+  margin-top: 32px;
+  border-top: 1px solid var(--text);
+  border-left: 1px solid var(--line);
+}
+
+.onboarding-outcome article {
+  min-height: 118px;
+  padding: 18px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  background: #ffffff;
+}
+
+.onboarding-outcome span {
+  color: var(--quiet);
+  font-size: 12px;
+}
+
+.onboarding-outcome strong {
+  display: block;
+  max-width: 540px;
+  margin-top: 22px;
+  font-size: 21px;
+  line-height: 1.08;
+}
+
+.onboarding-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(320px, 0.8fr);
+  gap: 24px;
+  margin-top: 28px;
+}
+
+.onboarding-layout.secondary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.onboarding-side,
+.onboarding-layout > section {
+  min-width: 0;
+}
+
+.onboarding-side #onboarding-runtime,
+.route-list {
+  display: grid;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+
+.onboarding-side .card,
+.route-list .card {
+  min-height: 0;
+  border-top: 0;
+  border-left: 0;
+}
+
+.onboarding-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 28px;
+}
+
 .landing-system-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

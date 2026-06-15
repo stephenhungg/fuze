@@ -126,6 +126,16 @@ def test_demo_seed_reports_vector_memory_status():
     assert len(data["snapshot"]["staff_profiles"]) == 5
 
 
+def test_demo_snapshot_is_read_only_shape_for_onboarding():
+    response = client.get("/demo/snapshot")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["snapshot"]["org_profile"]["name"] == "Harbor Light Community Services"
+    assert len(data["snapshot"]["connectors"]) == 4
+    assert len(data["snapshot"]["metrics"]) == 4
+
+
 def test_vector_search_endpoint_has_safe_fallback_shape():
     response = client.post(
         "/tools/vector_search",
