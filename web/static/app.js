@@ -117,6 +117,10 @@ function activeThread() {
   return chatThreads.find((thread) => thread.id === activeThreadId) || chatThreads[0];
 }
 
+function threadById(threadId) {
+  return chatThreads.find((thread) => thread.id === threadId);
+}
+
 function shortTitle(text) {
   const trimmed = String(text || "").trim();
   if (!trimmed) return "New chat";
@@ -160,6 +164,15 @@ function pushMessage(role, label, text) {
   if (!thread) thread = createThread();
   thread.messages.push({ role, label, text });
   renderActiveThread();
+}
+
+function pushMessageToThread(threadId, role, label, text) {
+  const thread = threadById(threadId);
+  if (!thread) return;
+  thread.messages.push({ role, label, text });
+  if (activeThreadId === threadId) {
+    renderActiveThread();
+  }
 }
 
 function startNewChat() {
@@ -963,13 +976,15 @@ async function runAgent() {
   }
   let thread = activeThread();
   if (!thread) thread = createThread();
+  const targetThreadId = thread.id;
   if (thread.title === "New chat") {
     thread.title = shortTitle(goal);
   }
   thread.status = "Running";
   renderThreadList();
-  pushMessage("user", userSelect.selectedOptions[0]?.textContent?.split(" · ")[0] || "you", goal);
-  pushMessage("system", "local runtime", "routing to the gb10 agent runtime...");
+  pushMessageToThread(targetThreadId, "user", userSelect.selectedOptions[0]?.textContent?.split(" · ")[0] || "you", goal);
+  pushMessageToThread(targetThreadId, "system", "local runtime", "routing to the gb10 agent runtime...");
+  goalInput.value = "";
   runBtn.disabled = true;
   runBtn.textContent = "Sending...";
   try {
@@ -1002,14 +1017,16 @@ async function runAgent() {
     const mesh = await getJson("/agents/status");
     previewMode = false;
     render(result, { updateChat: false });
-    const updatedThread = activeThread();
+    const updatedThread = threadById(targetThreadId);
     if (updatedThread) {
       updatedThread.messages = updatedThread.messages.filter((message) => message.text !== "routing to the gb10 agent runtime...");
       updatedThread.status = `${result.context_packet.readiness_score}% ready`;
     }
-    pushMessage("assistant", "fuze", assistantReplyFromResult(result));
+    pushMessageToThread(targetThreadId, "assistant", "fuze", assistantReplyFromResult(result));
     renderThreadList();
-    goalInput.value = "";
+    if (activeThreadId === targetThreadId) {
+      renderActiveThread();
+    }
     renderIngestion(ingestion);
     renderContextCore(context);
     renderDirectory(directory, accessPreview);
@@ -1029,13 +1046,16 @@ async function runAgent() {
     );
     renderContextEval(evalResult);
   } catch (error) {
-    const failedThread = activeThread();
+    const failedThread = threadById(targetThreadId);
     if (failedThread) {
       failedThread.messages = failedThread.messages.filter((message) => message.text !== "routing to the gb10 agent runtime...");
       failedThread.status = "Failed";
     }
-    pushMessage("assistant", "fuze", `That request failed: ${error.message}. The local preview state is still available, but the backend call did not complete.`);
+    pushMessageToThread(targetThreadId, "assistant", "fuze", `That request failed: ${error.message}. The local preview state is still available, but the backend call did not complete.`);
     renderThreadList();
+    if (activeThreadId === targetThreadId) {
+      renderActiveThread();
+    }
     sseStatus.textContent = "preview";
   } finally {
     runBtn.disabled = false;
