@@ -3,14 +3,16 @@
 - [x] add personal agent runtime control-plane model
 - [x] expose personal agent provisioning/status api endpoints
 - [x] wire personal agents into onboarding, agent mesh, docs, and ui
-- [ ] test locally, push, update gb10, and verify production proxy
+- [x] test locally, push, update gb10, and verify production proxy
 
 ## personal agent runtime
 
 - each employee gets a lightweight agent home, not a dedicated model process.
 - personal agents share the dell-hosted ollama/qdrant/context-core services.
 - the runtime contract must include bash env, workspace folders, mcp/tool registry, web search policy, cron/heartbeat, skills, quotas, audit, and rbac.
-- local verification: `python3 -m pytest -q` passes with 27 tests.
+- local verification: `python3 -m pytest -q` passes with 30 tests.
+- gb10 verification: pulled latest, restarted `fuze-api`, and `python3 -m pytest -q` passes with 30 tests.
+- production verification: `https://fuze.stephenhung.me/onboarding/run` provisions personal agents on the dell and writes env, mcp, skill, cron, supervisor, and audit files.
 
 ## onboarding page fix
 
