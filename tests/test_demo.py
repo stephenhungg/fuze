@@ -173,6 +173,28 @@ def test_chat_endpoint_uses_client_history_for_followups():
     assert "sarah" in data["response"]
 
 
+def test_chat_endpoint_answers_orientation_and_runtime_proof_questions():
+    orientation = client.post(
+        "/chat",
+        json={"message": "whats going on", "role": "grant_manager", "user_id": "morgan"},
+    )
+    assert orientation.status_code == 200
+    orientation_data = orientation.json()
+    assert "here’s what’s going on" in orientation_data["response"]
+    assert "local-first agent workspace" in orientation_data["response"]
+    assert "i checked the local context core" not in orientation_data["response"]
+
+    proof = client.post(
+        "/chat",
+        json={"message": "are we using llms here", "role": "grant_manager", "user_id": "morgan"},
+    )
+    assert proof.status_code == 200
+    proof_data = proof.json()
+    assert "api runtime" in proof_data["response"]
+    assert "cloud llm calls: 0" in proof_data["response"]
+    assert "i checked the local context core" not in proof_data["response"]
+
+
 def test_system_runtime_is_honest_about_gb10_boundary():
     response = client.get("/system/runtime")
 

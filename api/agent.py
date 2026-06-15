@@ -304,6 +304,85 @@ def answer_goal(
     )
 
 
+def wants_runtime_proof(goal: str) -> bool:
+    question = goal.lower().strip()
+    proof_terms = [
+        "legit",
+        "real",
+        "dell",
+        "gb10",
+        "runtime",
+        "inference",
+        "ollama",
+        "llm",
+        "model",
+        "cloud",
+        "local",
+        "proof",
+    ]
+    return any(term in question for term in proof_terms)
+
+
+def wants_orientation(goal: str) -> bool:
+    question = goal.lower().strip().replace("'", "")
+    return any(
+        phrase in question
+        for phrase in [
+            "what is going on",
+            "whats going on",
+            "what are you",
+            "what do you do",
+            "what is this",
+            "explain yourself",
+        ]
+    )
+
+
+def answer_runtime_proof(goal: str, execution: dict[str, Any], inference_probe: dict[str, Any]) -> str | None:
+    if not wants_runtime_proof(goal):
+        return None
+
+    if inference_probe.get("available"):
+        return (
+            "yes. this request is running through the local fuze runtime on the dell path.\n\n"
+            f"- api runtime: {execution['provider']}\n"
+            f"- local model proof: {inference_probe['provider']} on {inference_probe['host']}\n"
+            f"- model: {inference_probe['model']}\n"
+            f"- model response: {inference_probe.get('response', 'generated locally')}\n"
+            "- cloud llm calls: 0\n\n"
+            "the app still uses deterministic policy/workflow orchestration around the model so the demo stays stable, but the runtime proof is coming from ollama on the dell."
+        )
+
+    return (
+        "partly. the api is running in the fuze runtime, but i do not have a successful local ollama generation proof for this request.\n\n"
+        f"- api runtime: {execution['provider']}\n"
+        f"- expected model: {inference_probe.get('model')}\n"
+        f"- proof status: {inference_probe.get('reason') or inference_probe.get('error') or 'not available'}\n"
+        "- cloud llm calls: 0"
+    )
+
+
+def answer_orientation(goal: str, execution: dict[str, Any], inference_probe: dict[str, Any]) -> str | None:
+    if not wants_orientation(goal):
+        return None
+
+    model_line = (
+        f"ollama proof is live on {inference_probe['model']}"
+        if inference_probe.get("available")
+        else f"ollama proof is not active yet for {inference_probe.get('model')}"
+    )
+    return (
+        "here’s what’s going on:\n\n"
+        "- fuze is a local-first agent workspace for nonprofit ops\n"
+        "- you ask normal questions in chat; fuze pulls org context, checks policy, and queues tasks/approvals\n"
+        "- the anderson-report demo is the current seeded workflow\n"
+        f"- runtime: {execution['provider']}\n"
+        f"- inference proof: {model_line}\n"
+        "- cloud llm calls: 0\n\n"
+        "try: “what do we need for the anderson report?”, then “who owns that?”, then “are you legit?”"
+    )
+
+
 def response_kind(goal: str) -> str:
     question = goal.lower().strip()
     if question in {"hi", "hello", "hey", "yo", "sup", "what", "why", "how", "help"} or len(question.split()) <= 1:
@@ -318,6 +397,11 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str |
     approvals = create_approvals(context, report)
     execution = runtime.local_execution_mode()
     inference_probe = runtime.local_inference_probe(goal, context.get("readiness_score"))
+    response = (
+        answer_runtime_proof(goal, execution, inference_probe)
+        or answer_orientation(goal, execution, inference_probe)
+        or answer_goal(goal, context, tasks, approvals, report)
+    )
     audit = {
         "id": f"audit-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -358,7 +442,7 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str |
     return {
         "status": "ready_for_review",
         "goal": goal,
-        "response": answer_goal(goal, context, tasks, approvals, report),
+        "response": response,
         "response_kind": response_kind(goal),
         "context_packet": context,
         "tasks": tasks,

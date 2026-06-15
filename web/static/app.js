@@ -663,10 +663,16 @@ function assistantReplyFromResult(result) {
   const urgentTasks = result.tasks.filter((task) => task.priority === "high").length;
   const missing = packet.missing_info[0];
   const runtime = result.audit.model_runtime;
+  const localInference = runtime.local_inference || {};
+  const proxy = result._runtime_proxy;
+  const runtimeLabel = proxy?.execution === "gb10_runtime" ? "gb10 runtime" : runtime.provider;
+  const modelProof = localInference.available
+    ? `ollama ${localInference.model} on ${localInference.host}`
+    : runtime.inference;
   const answer = result.response
     ? result.response
     : `You are ${packet.readiness_score}% ready. I found ${urgentTasks} urgent task${urgentTasks === 1 ? "" : "s"}, ${pendingApprovals} approval gate${pendingApprovals === 1 ? "" : "s"}, and ${missing ? `one missing update from ${missing.owner}` : "no missing owner update"}.`;
-  return `${answer}\n\nlocal proof: ${runtime.provider}; cloud calls ${runtime.cloud_calls}.`;
+  return `${answer}\n\nlocal proof: ${runtimeLabel}; ${modelProof}; cloud calls ${runtime.cloud_calls}.`;
 }
 
 function renderStaffBrief(result) {
