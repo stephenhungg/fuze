@@ -1,3 +1,6 @@
+import json
+from pathlib import Path
+
 from fastapi.testclient import TestClient
 
 from api.main import app, sse_frame
@@ -372,7 +375,9 @@ def test_onboarding_flow_covers_identity_docs_and_agents():
     assert "microsoft graph delta queries" in data["identity_management"]["directory_sync"]
     assert "graph webhooks/change notifications" in data["doc_ingestion"]["change_detection"]
     assert "mcp tools" in " ".join(data["personal_agent_runtime"]["provisioning"])
-    assert data["personal_agent_runtime"]["home_root"] == "/var/lib/fuze/agents"
+    from api import personal_agents
+
+    assert data["personal_agent_runtime"]["home_root"] == personal_agents.AGENT_ROOT
 
 
 def test_personal_agents_expose_bash_mcp_web_search_cron_and_skills():
@@ -383,7 +388,7 @@ def test_personal_agents_expose_bash_mcp_web_search_cron_and_skills():
     assert data["cloud_llm_calls"] == 0
     assert data["ram_strategy"].startswith("many lightweight")
     morgan = next(agent for agent in data["agents"] if agent["user"]["id"] == "morgan")
-    assert morgan["paths"]["workspace"] == "/var/lib/fuze/agents/morgan/workspace"
+    assert morgan["paths"]["workspace"].endswith("/morgan/workspace")
     assert morgan["bash_env"]["SHELL"] == "/bin/bash"
     assert morgan["bash_env"]["FUZE_AGENT_ID"] == "personal-agent-morgan"
     assert morgan["bash_env"]["FUZE_CONTEXT_CORE_URL"].endswith("/context/query")
@@ -400,7 +405,10 @@ def test_personal_agents_expose_bash_mcp_web_search_cron_and_skills():
     assert "context_query" in morgan["policy"]["audit"]
 
 
-def test_personal_agent_provisioning_records_actions_and_events():
+def test_personal_agent_provisioning_records_actions_files_and_events(tmp_path, monkeypatch):
+    from api import personal_agents
+
+    monkeypatch.setattr(personal_agents, "AGENT_ROOT", str(tmp_path / "agents"))
     response = client.post("/personal-agents/provision", json={"user_id": "morgan", "actor": "alex"})
 
     assert response.status_code == 200
@@ -410,6 +418,13 @@ def test_personal_agent_provisioning_records_actions_and_events():
     assert data["agent"]["last_heartbeat"] is not None
     action_types = {action["type"] for action in data["actions"]}
     assert {"mkdir", "write_env", "write_mcp", "install_skills", "install_cron", "start_worker"}.issubset(action_types)
+    assert data["materialized"] is True
+    assert Path(data["agent"]["paths"]["workspace"]).exists()
+    assert Path(data["agent"]["paths"]["home"], ".env").exists()
+    mcp_config = Path(data["agent"]["paths"]["mcp"], "servers.json")
+    assert mcp_config.exists()
+    assert json.loads(mcp_config.read_text())["servers"][0]["id"] == "fuze-context-core"
+    assert Path(data["agent"]["paths"]["cron"], "fuze.crontab").exists()
 
     heartbeat = client.post("/personal-agents/morgan/heartbeat")
     assert heartbeat.status_code == 200
@@ -419,6 +434,41 @@ def test_personal_agent_provisioning_records_actions_and_events():
     assert mesh["personal_agents"]["provisioned"] >= 1
     event_types = {event["type"] for event in mesh["events"]}
     assert {"provision", "heartbeat"}.issubset(event_types)
+
+
+def test_onboarding_run_executes_backend_setup_and_materializes_agents(tmp_path, monkeypatch):
+    from api import personal_agents
+
+    monkeypatch.setattr(personal_agents, "AGENT_ROOT", str(tmp_path / "agents"))
+    response = client.post("/onboarding/run", json={"actor": "alex", "provision_user_ids": ["morgan", "alex"]})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ready"
+    step_ids = {step["id"] for step in data["steps"]}
+    assert {"identity-sync", "ingestion", "personal-agents", "context-eval"}.issubset(step_ids)
+    agent_step = next(step for step in data["steps"] if step["id"] == "personal-agents")
+    assert len(agent_step["result"]) == 2
+    assert all(item["files_written"] >= 5 for item in agent_step["result"])
+    assert Path(tmp_path, "agents", "morgan", ".env").exists()
+    assert Path(tmp_path, "agents", "alex", "mcp", "servers.json").exists()
+    assert data["cloud_llm_calls"] == 0
+
+
+def test_personal_agent_state_survives_memory_clear():
+    from api import personal_agents
+
+    response = client.post("/personal-agents/provision", json={"user_id": "alex", "actor": "alex", "materialize": False})
+    assert response.status_code == 200
+
+    personal_agents.PROVISIONED_AT.clear()
+    personal_agents.LAST_HEARTBEAT.clear()
+    status = client.get("/personal-agents/alex")
+
+    assert status.status_code == 200
+    data = status.json()
+    assert data["status"] == "provisioned"
+    assert data["last_heartbeat"] is not None
 
 
 def test_approval_queue_created_and_decision_is_auditable():

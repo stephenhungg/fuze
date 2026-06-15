@@ -117,6 +117,12 @@ class ApprovalDecisionRequest(BaseModel):
 class PersonalAgentProvisionRequest(BaseModel):
     user_id: str = "morgan"
     actor: str = "admin"
+    materialize: bool = True
+
+
+class OnboardingRunRequest(BaseModel):
+    actor: str = "alex"
+    provision_user_ids: list[str] | None = None
 
 
 def body(model: BaseModel) -> dict[str, Any]:
@@ -338,7 +344,11 @@ async def personal_agent_provision(request: PersonalAgentProvisionRequest) -> di
     if runtime.configured():
         return await proxy_runtime("POST", "/personal-agents/provision", body(request))
     try:
-        result = personal_agents.provision_personal_agent(user_id=request.user_id, actor=request.actor)
+        result = personal_agents.provision_personal_agent(
+            user_id=request.user_id,
+            actor=request.actor,
+            materialize=request.materialize,
+        )
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
     events.record_personal_agent_provision(result)
@@ -444,6 +454,99 @@ async def identity_access_preview(user_id: str, external: bool = True) -> dict[s
 @app.get("/onboarding/flow")
 def onboarding_flow() -> dict[str, Any]:
     return onboarding.onboarding_status()
+
+
+@app.post("/onboarding/run")
+async def onboarding_run(request: OnboardingRunRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/onboarding/run", body(request), timeout=180)
+
+    steps: list[dict[str, Any]] = []
+
+    directory_result = identity.sync_directory(actor=request.actor)
+    events.record_identity_sync(directory_result)
+    steps.append(
+        {
+            "id": "identity-sync",
+            "status": "done",
+            "backend": "POST /identity/sync",
+            "summary": f"synced {directory_result['users_seen']} users and {directory_result['groups_seen']} groups",
+            "result": directory_result,
+        }
+    )
+
+    ingestion_result = ingest.ingest_sample_corpus()
+    memory_chunks = ingest.chunks_for_memory(ingestion_result)
+    store.replace_chunks(memory_chunks)
+    vector_seed = await vector_memory.seed()
+    ingestion_result["memory_chunks"] = len(memory_chunks)
+    ingestion_result["vector_seed"] = vector_seed
+    events.record_ingestion(ingestion_result)
+    steps.append(
+        {
+            "id": "ingestion",
+            "status": "done",
+            "backend": "POST /ingestion/run",
+            "summary": f"ingested {ingestion_result['files_seen']} files into {ingestion_result['chunks_created']} chunks",
+            "result": {key: value for key, value in ingestion_result.items() if key != "chunks"},
+        }
+    )
+
+    user_ids = request.provision_user_ids or [user["id"] for user in identity.list_users()]
+    provisioned = []
+    for user_id in user_ids:
+        try:
+            result = personal_agents.provision_personal_agent(user_id=user_id, actor=request.actor, materialize=True)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        except OSError as exc:
+            raise HTTPException(status_code=500, detail=f"failed to provision {user_id}: {exc}") from exc
+        events.record_personal_agent_provision(result)
+        provisioned.append(
+            {
+                "user_id": user_id,
+                "agent_id": result["agent"]["id"],
+                "home": result["agent"]["paths"]["home"],
+                "dirs_created": len(result["artifacts"]["created_dirs"]),
+                "files_written": len(result["artifacts"]["written_files"]),
+                "mcp_servers": [server["id"] for server in result["agent"]["mcp_servers"]],
+                "skills": [skill["id"] for skill in result["agent"]["skills"]],
+            }
+        )
+    steps.append(
+        {
+            "id": "personal-agents",
+            "status": "done",
+            "backend": "POST /personal-agents/provision",
+            "summary": f"provisioned {len(provisioned)} personal agents with folders, env, mcp, skills, cron, and audit files",
+            "result": provisioned,
+        }
+    )
+
+    eval_result = await retrieval.evaluate_context_core()
+    steps.append(
+        {
+            "id": "context-eval",
+            "status": "done" if eval_result["passed"] else "needs_review",
+            "backend": "GET /context/eval",
+            "summary": f"context eval average {round(eval_result['average_score'] * 100)}% across {eval_result['case_count']} cases",
+            "result": {
+                "passed": eval_result["passed"],
+                "average_score": eval_result["average_score"],
+                "case_count": eval_result["case_count"],
+                "cloud_llm_calls": eval_result["cloud_llm_calls"],
+            },
+        }
+    )
+
+    return {
+        "status": "ready",
+        "actor": request.actor,
+        "cloud_llm_calls": 0,
+        "steps": steps,
+        "personal_agents": personal_agents.list_personal_agents(),
+        "snapshot": store.snapshot(),
+    }
 
 
 @app.get("/graph")

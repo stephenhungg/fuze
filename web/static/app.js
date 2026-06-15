@@ -28,6 +28,8 @@ const onboardingFlow = document.querySelector("#onboarding-flow");
 const onboardingRuntime = document.querySelector("#onboarding-runtime");
 const onboardingConnectors = document.querySelector("#onboarding-connectors");
 const onboardingPersonalAgents = document.querySelector("#onboarding-personal-agents");
+const onboardingRunBtn = document.querySelector("#onboarding-run-btn");
+const onboardingRunOutput = document.querySelector("#onboarding-run-output");
 const graph = document.querySelector("#graph");
 const blocked = document.querySelector("#blocked");
 const score = document.querySelector("#score");
@@ -716,6 +718,63 @@ function renderOnboardingPersonalAgents(data) {
   ].join("");
 }
 
+function renderOnboardingRun(result) {
+  if (!onboardingRunOutput) return;
+  onboardingRunOutput.innerHTML = [
+    linesCard("Setup run", [
+      `${result.status} · actor ${result.actor}`,
+      `cloud calls: ${result.cloud_llm_calls}`,
+      `${result.steps.length} backend steps completed`,
+    ]),
+    ...result.steps.map((step) =>
+      linesCard(
+        step.summary,
+        [
+          `${step.backend} · ${step.status}`,
+          step.id === "personal-agents"
+            ? `${step.result.length} agents · ${step.result.reduce((sum, item) => sum + item.files_written, 0)} files written`
+            : JSON.stringify(step.result).slice(0, 180),
+        ],
+        `<span class="tag">${escapeHtml(step.id)}</span>`,
+      ),
+    ),
+  ].join("");
+}
+
+async function runOnboardingSetup() {
+  if (!onboardingRunBtn) return;
+  onboardingRunBtn.disabled = true;
+  onboardingRunBtn.textContent = "Running setup...";
+  if (onboardingRunOutput) {
+    onboardingRunOutput.innerHTML = linesCard("Setup run", ["syncing identity, ingesting docs, provisioning agents, and checking context eval"]);
+  }
+  try {
+    const result = await getJson("/onboarding/run", {
+      method: "POST",
+      body: JSON.stringify({ actor: localStorage.getItem("fuze-admin-user") || "alex" }),
+    });
+    renderOnboardingRun(result);
+    renderOnboardingPersonalAgents(result.personal_agents);
+    renderOnboardingConnectors({
+      files_seen: result.steps.find((step) => step.id === "ingestion")?.result.files_seen,
+      chunks_created: result.steps.find((step) => step.id === "ingestion")?.result.chunks_created,
+      pii_chunks: result.steps.find((step) => step.id === "ingestion")?.result.pii_chunks,
+      restricted_files: result.steps.find((step) => step.id === "ingestion")?.result.restricted_files || [],
+      connectors: result.snapshot.connectors,
+      metrics: result.snapshot.metrics,
+    });
+    const mesh = await getJson("/agents/status");
+    renderAgents(mesh);
+  } catch (error) {
+    if (onboardingRunOutput) {
+      onboardingRunOutput.innerHTML = linesCard("Setup failed", [error.message, "check gb10 runtime connectivity and agent root permissions"]);
+    }
+  } finally {
+    onboardingRunBtn.disabled = false;
+    onboardingRunBtn.textContent = "Run setup on gb10";
+  }
+}
+
 function renderDirectory(data, preview) {
   const mappedGroups = data.groups
     .map((group) => `${group.display_name}: ${group.mapped_role}`)
@@ -942,6 +1001,9 @@ approvalsPanel.addEventListener("click", (event) => {
   decideApproval(button.dataset.approval, button.dataset.decision, button).catch(() => {
     button.disabled = false;
   });
+});
+onboardingRunBtn?.addEventListener("click", () => {
+  runOnboardingSetup();
 });
 renderRoute();
 loadUsers().then(runAgent).catch(() => {
