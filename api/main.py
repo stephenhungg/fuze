@@ -120,6 +120,18 @@ async def qdrant_status() -> dict[str, Any]:
     return await vector_memory.status()
 
 
+async def ensure_demo_memory() -> None:
+    has_ingested_sample = any(
+        chunk.get("metadata", {}).get("derived_from") == "sample_data/harbor_light"
+        for chunk in store.chunks()
+    )
+    if has_ingested_sample:
+        return
+    result = ingest.ingest_sample_corpus()
+    store.replace_chunks(ingest.chunks_for_memory(result))
+    await vector_memory.seed()
+
+
 async def monitor_loop() -> None:
     while True:
         try:
@@ -207,7 +219,8 @@ async def seed() -> dict[str, Any]:
 
 
 @app.post("/agent/run")
-def run_agent(request: GoalRequest) -> dict[str, Any]:
+async def run_agent(request: GoalRequest) -> dict[str, Any]:
+    await ensure_demo_memory()
     result = agent.run_agent(goal=request.goal, role=request.role, user_id=request.user_id)
     events.record_run(result, trigger="manual")
     return result
@@ -341,12 +354,14 @@ def audit() -> dict[str, Any]:
 
 
 @app.post("/tools/get_context")
-def get_context(request: GoalRequest) -> dict[str, Any]:
+async def get_context(request: GoalRequest) -> dict[str, Any]:
+    await ensure_demo_memory()
     return retrieval.get_context(goal=request.goal, role=request.role, user_id=request.user_id, external=True)
 
 
 @app.post("/context/query")
 async def context_query(request: ContextQueryRequest) -> dict[str, Any]:
+    await ensure_demo_memory()
     return await retrieval.query_context_core(
         question=request.question,
         org_id=request.org_id,
@@ -360,6 +375,7 @@ async def context_query(request: ContextQueryRequest) -> dict[str, Any]:
 
 @app.get("/context/eval")
 async def context_eval() -> dict[str, Any]:
+    await ensure_demo_memory()
     return await retrieval.evaluate_context_core()
 
 
@@ -384,4 +400,5 @@ def create_tasks() -> dict[str, Any]:
 
 @app.post("/tools/vector_search")
 async def vector_search(request: VectorSearchRequest) -> dict[str, Any]:
+    await ensure_demo_memory()
     return await vector_memory.search(query=request.query, limit=request.limit)
