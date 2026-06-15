@@ -16,7 +16,7 @@ from typing import Any
 from . import identity
 
 
-AGENT_ROOT = os.getenv("FUZE_AGENT_ROOT", "/var/lib/fuze/agents")
+AGENT_ROOT = os.getenv("FUZE_AGENT_ROOT", str(Path.cwd() / ".fuze" / "agents"))
 STATE_PATH = Path(os.getenv("FUZE_PERSONAL_AGENT_STATE", "/tmp/fuze-personal-agents-state.json"))
 CONTEXT_CORE_URL = "http://127.0.0.1:8000/context/query"
 MCP_BASE_URL = "http://127.0.0.1:8000/mcp"
