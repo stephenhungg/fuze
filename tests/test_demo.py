@@ -50,10 +50,25 @@ def test_health_reports_local_runtime_surfaces():
     assert response.status_code == 200
     data = response.json()
     assert data["cloud_llm_calls"] == 0
+    assert data["mode"] in {"hosted_preview", "gb10_runtime", "gb10_runtime_unreachable"}
+    assert data["runtime"]["gb10"]["execution"] in {"hosted_preview", "gb10_runtime", "gb10_runtime_unreachable"}
     assert "ollama" in data
     assert "qdrant" in data
     assert data["identity"]["provider"] == "demo-adapter"
     assert data["always_on"]["enabled"] is True
+
+
+def test_system_runtime_is_honest_about_gb10_boundary():
+    response = client.get("/system/runtime")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["cloud_llm_calls"] == 0
+    assert data["security_boundary"]["raw_public_gb10_access"] is False
+    assert data["security_boundary"]["requires_private_tunnel"] is True
+    assert data["gb10"]["execution"] in {"hosted_preview", "gb10_runtime", "gb10_runtime_unreachable"}
+    if data["gb10"]["execution"] == "hosted_preview":
+        assert data["local_execution"]["provider"] == "deterministic demo engine"
 
 
 def test_static_seo_files_are_served_by_app():

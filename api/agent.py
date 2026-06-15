@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from . import policy, retrieval
+from . import runtime
 from .db import DEMO_GOAL, store
 
 
@@ -131,6 +132,7 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str |
     tasks = create_tasks()
     report = prepare_report(context)
     approvals = create_approvals(context, report)
+    execution = runtime.local_execution_mode()
     audit = {
         "id": f"audit-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}",
         "created_at": datetime.now(timezone.utc).isoformat(),
@@ -151,7 +153,9 @@ def run_agent(goal: str = DEMO_GOAL, role: str = "grant_manager", user_id: str |
         "approvals_required": report["approvals_required"],
         "approval_ids": [approval["id"] for approval in approvals],
         "model_runtime": {
-            "provider": "local ollama",
+            "provider": execution["provider"],
+            "execution_mode": execution["mode"],
+            "inference": execution["inference"],
             "routing_model": "qwen3:8b",
             "planning_model": "qwen3:14b",
             "embedding_model": "nomic-embed-text",
@@ -194,8 +198,8 @@ def pitch_packet() -> dict[str, Any]:
             "approvals_required": ["external report export", "third anonymized story"],
         },
         "technical_proof": [
-            "runs on the gb10 through fuze-api, ollama, and qdrant",
-            "uses local ollama models and nomic-embed-text embeddings",
+            "target runtime runs on the gb10 through fuze-api, ollama, and qdrant",
+            "uses local ollama models and nomic-embed-text embeddings when gb10 runtime is configured",
             "seeds/searches qdrant collection fuze_context",
             "keeps cloud llm calls at 0",
             "always-on monitor refreshes readiness/audit state",
@@ -203,9 +207,9 @@ def pitch_packet() -> dict[str, Any]:
             "policy checks block pii while preserving audit evidence",
         ],
         "rubric_mapping": {
-            "local_first_always_on": "gb10 service, local ollama, qdrant, always-on monitor, cloud calls 0",
+            "local_first_always_on": "gb10 service target, local ollama, qdrant, always-on monitor, cloud calls 0",
             "business_value": "grant reporting readiness workflow with missing-info tasks, drafts, and approval packet",
             "demo_pitch": "three-panel ui shows goal, graph traversal, readiness, drafts, blocked context, and audit",
-            "technical_execution": "tested fastapi app with live gb10 services and browser checks",
+            "technical_execution": "tested fastapi app, retrieval endpoints, and browser checks; gb10 runtime requires secure tunnel config for prod",
         },
     }

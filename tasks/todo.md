@@ -1,5 +1,16 @@
 # todo
 
+- [x] audit current production-to-dell security posture
+- [x] document hipaa/soc2 readiness gaps and secure connectivity plan
+- [x] patch misleading gb10 production copy
+- [x] run verification after security/docs changes
+
+## security audit
+
+- current production at `fuze.stephenhung.me` is a vercel-hosted demo and does not ping, tunnel to, ssh into, or execute on the dell gb10.
+- the public app is acceptable only for synthetic demo data right now.
+- do not claim production is hipaa compliant, soc 2 compliant, or on-prem execution until auth, tunnel, audit, encryption, retention, evidence, and organizational controls are implemented.
+
 - [x] replace the root landing page with the supplied architectural landing direction
 - [x] keep workspace routing and chat interface unchanged
 - [x] verify locally, deploy, and smoke-test production

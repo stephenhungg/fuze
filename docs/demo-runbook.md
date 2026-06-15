@@ -11,7 +11,7 @@ http://promaxgb10-5d0c:8000
 fallback ip from the venue setup:
 
 ```text
-http://10.103.132.14:8000
+http://10.104.132.14:8000
 ```
 
 ## services

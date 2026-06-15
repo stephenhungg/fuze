@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import agent, events, identity, ingest, onboarding, policy, retrieval, vector_memory
+from . import agent, events, identity, ingest, onboarding, policy, retrieval, runtime, vector_memory
 from .db import DEMO_GOAL, store
 
 
@@ -199,15 +199,35 @@ def spa_route() -> FileResponse:
 
 @app.get("/health")
 async def health() -> dict[str, Any]:
+    gb10 = await runtime.gb10_status()
     return {
         "ok": True,
         "name": "fuze",
-        "mode": "local-first",
+        "mode": gb10["execution"],
         "cloud_llm_calls": 0,
+        "runtime": {
+            "hosted_preview": not gb10["configured"],
+            "gb10": gb10,
+        },
         "ollama": await ollama_status(),
         "qdrant": await qdrant_status(),
         "identity": identity.identity_status(),
         "always_on": monitor_state,
+    }
+
+
+@app.get("/system/runtime")
+async def system_runtime() -> dict[str, Any]:
+    gb10 = await runtime.gb10_status()
+    return {
+        "cloud_llm_calls": 0,
+        "local_execution": runtime.local_execution_mode(),
+        "gb10": gb10,
+        "security_boundary": {
+            "raw_public_gb10_access": False,
+            "requires_private_tunnel": True,
+            "recommended": "cloudflare access, tailscale, or wireguard with oidc and server-side rbac",
+        },
     }
 
 

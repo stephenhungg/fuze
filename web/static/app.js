@@ -402,8 +402,8 @@ function renderPreview() {
     userSelect.value = "morgan";
   }
   setCloudCalls("0");
-  ollama.textContent = "gb10 live / preview fallback";
-  qdrant.textContent = "gb10 live / preview fallback";
+  ollama.textContent = "preview, no inference";
+  qdrant.textContent = "preview memory";
   identityStatus.textContent = "ad/entra simulator";
   alwaysOn.textContent = "preview";
   render(previewResult);
@@ -414,8 +414,8 @@ function renderPreview() {
   vectorMemory.innerHTML = linesCard("Qdrant preview", ["64 ingested chunks", "nomic-embed-text on gb10"], `<span class="tag">grant_requirements.txt, volunteers.csv</span>`);
   pitchProof.innerHTML = linesCard(
     "Rubric fit",
-    ["local-first: gb10 service, local ollama, qdrant, always-on monitor, cloud calls 0", "business value: grant readiness workflow for nonprofit teams"],
-    `<span class="tag">frontend preview; live api runs on gb10</span>`,
+    ["local-first: gb10 service target, local ollama, qdrant, always-on monitor, cloud calls 0", "business value: grant readiness workflow for nonprofit teams"],
+    `<span class="tag">hosted preview; sensitive runtime belongs on gb10</span>`,
   );
   renderContextEval(previewEval);
 }
@@ -423,8 +423,17 @@ function renderPreview() {
 async function loadHealth() {
   const health = await getJson("/health");
   setCloudCalls(health.cloud_llm_calls);
-  ollama.textContent = health.ollama.available ? "online" : "offline fallback";
-  qdrant.textContent = health.qdrant.available ? "online" : "offline fallback";
+  const gb10 = health.runtime?.gb10;
+  if (gb10?.reachable) {
+    ollama.textContent = gb10.remote?.ollama?.available ? "gb10 online" : "gb10, ollama offline";
+    qdrant.textContent = gb10.remote?.qdrant?.available ? "gb10 qdrant" : "gb10 qdrant offline";
+  } else if (gb10?.configured) {
+    ollama.textContent = "gb10 unreachable";
+    qdrant.textContent = "gb10 unreachable";
+  } else {
+    ollama.textContent = "hosted preview";
+    qdrant.textContent = "hosted preview";
+  }
   identityStatus.textContent = health.identity.provider;
   alwaysOn.textContent = `${health.always_on.last_status} · ${health.always_on.runs}`;
 }

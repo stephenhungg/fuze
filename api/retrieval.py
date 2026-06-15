@@ -436,7 +436,7 @@ async def query_context_core(
         "server": {
             "name": "fuze-context-core",
             "style": "local-mcp",
-            "hosted_on": "dell-gb10",
+            "hosted_on": "hosted-preview unless FUZE_GB10_RUNTIME_URL is configured",
             "cloud_llm_calls": 0,
         },
         "question": question,
