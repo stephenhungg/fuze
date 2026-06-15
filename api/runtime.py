@@ -23,9 +23,42 @@ def headers() -> dict[str, str]:
     return {"authorization": f"bearer {GB10_RUNTIME_TOKEN}"}
 
 
+def with_proxy_marker(payload: Any, path: str) -> Any:
+    if isinstance(payload, dict):
+        return {
+            **payload,
+            "_runtime_proxy": {
+                "execution": "gb10_runtime",
+                "url": GB10_RUNTIME_URL,
+                "path": path,
+            },
+        }
+    return payload
+
+
+async def proxy_json(
+    method: str,
+    path: str,
+    json_body: dict[str, Any] | None = None,
+    timeout: float = 60,
+) -> Any:
+    """forward a runtime request to the secured gb10 api."""
+    async with httpx.AsyncClient(timeout=timeout, headers=headers()) as client:
+        response = await client.request(method, f"{GB10_RUNTIME_URL}{path}", json=json_body)
+        response.raise_for_status()
+    return with_proxy_marker(response.json(), path)
+
+
 async def gb10_status() -> dict[str, Any]:
     """report whether this process can reach a secured gb10 runtime."""
     if not configured():
+        if not HOSTED_PREVIEW:
+            return {
+                "configured": False,
+                "reachable": True,
+                "execution": "local_runtime",
+                "message": "running inside the local fuze runtime; no upstream gb10 url needed.",
+            }
         return {
             "configured": False,
             "reachable": False,
@@ -69,6 +102,12 @@ def local_execution_mode() -> dict[str, Any]:
             "mode": "gb10_runtime_configured",
             "provider": "secured gb10 runtime",
             "inference": "remote local ollama behind private access boundary",
+        }
+    if not HOSTED_PREVIEW:
+        return {
+            "mode": "local_runtime",
+            "provider": "local fuze runtime",
+            "inference": "local ollama/qdrant available on this machine when services are online",
         }
     return {
         "mode": "hosted_preview",

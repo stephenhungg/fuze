@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Any, AsyncIterator
 
 import httpx
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -61,6 +61,16 @@ if (WEB_DIR / "static").exists():
     app.mount("/static", StaticFiles(directory=WEB_DIR / "static"), name="static")
 
 
+@app.middleware("http")
+async def runtime_token_guard(request: Request, call_next: Any) -> Any:
+    expected = os.getenv("FUZE_INBOUND_RUNTIME_TOKEN", "")
+    if expected and request.url.path != "/health":
+        received = request.headers.get("authorization", "")
+        if received != f"bearer {expected}":
+            return JSONResponse({"detail": "runtime token required"}, status_code=401)
+    return await call_next(request)
+
+
 class GoalRequest(BaseModel):
     goal: str = DEMO_GOAL
     role: str = "grant_manager"
@@ -102,6 +112,26 @@ class ApprovalDecisionRequest(BaseModel):
     status: str
     actor: str = "alex"
     note: str = ""
+
+
+def body(model: BaseModel) -> dict[str, Any]:
+    if hasattr(model, "model_dump"):
+        return model.model_dump()
+    return model.dict()
+
+
+async def proxy_runtime(
+    method: str,
+    path: str,
+    payload: dict[str, Any] | None = None,
+    timeout: float = 60,
+) -> dict[str, Any]:
+    try:
+        return await runtime.proxy_json(method, path, payload, timeout=timeout)
+    except httpx.HTTPStatusError as exc:
+        raise HTTPException(status_code=exc.response.status_code, detail=exc.response.text) from exc
+    except httpx.RequestError as exc:
+        raise HTTPException(status_code=502, detail=f"gb10 runtime unreachable: {exc}") from exc
 
 
 async def ollama_status() -> dict[str, Any]:
@@ -233,6 +263,8 @@ async def system_runtime() -> dict[str, Any]:
 
 @app.post("/demo/seed")
 async def seed() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/demo/seed", timeout=120)
     snapshot = store.seed()
     vector_seed = await vector_memory.seed()
     return {"status": "seeded", "snapshot": snapshot, "vector_seed": vector_seed}
@@ -240,6 +272,8 @@ async def seed() -> dict[str, Any]:
 
 @app.post("/agent/run")
 async def run_agent(request: GoalRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/agent/run", body(request), timeout=120)
     await ensure_demo_memory()
     result = agent.run_agent(goal=request.goal, role=request.role, user_id=request.user_id)
     events.record_run(result, trigger="manual")
@@ -252,7 +286,9 @@ def demo_pitch() -> dict[str, Any]:
 
 
 @app.get("/agent/status")
-def agent_status() -> dict[str, Any]:
+async def agent_status() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/agent/status")
     return {
         "always_on": monitor_state,
         "tasks": store.tasks,
@@ -262,12 +298,16 @@ def agent_status() -> dict[str, Any]:
 
 
 @app.get("/agents/status")
-def agents_status() -> dict[str, Any]:
+async def agents_status() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/agents/status")
     return events.agent_status()
 
 
 @app.get("/agents/events")
-def agents_events() -> dict[str, Any]:
+async def agents_events() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/agents/events")
     return {"events": events.agent_status()["events"]}
 
 
@@ -277,18 +317,24 @@ async def events_stream() -> StreamingResponse:
 
 
 @app.get("/observability/summary")
-def observability_summary() -> dict[str, Any]:
+async def observability_summary() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/observability/summary")
     return events.observability_summary()
 
 
 @app.get("/ingestion/status")
-def ingestion_status() -> dict[str, Any]:
+async def ingestion_status() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/ingestion/status")
     result = ingest.ingest_sample_corpus()
     return {key: value for key, value in result.items() if key != "chunks"}
 
 
 @app.post("/ingestion/run")
 async def ingestion_run() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/ingestion/run", timeout=120)
     result = ingest.ingest_sample_corpus()
     memory_chunks = ingest.chunks_for_memory(result)
     store.replace_chunks(memory_chunks)
@@ -300,24 +346,32 @@ async def ingestion_run() -> dict[str, Any]:
 
 
 @app.get("/identity/users")
-def identity_users() -> dict[str, Any]:
+async def identity_users() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/identity/users")
     return {"users": identity.list_users(), "role_map": identity.GROUP_ROLE_MAP}
 
 
 @app.get("/identity/directory")
-def identity_directory() -> dict[str, Any]:
+async def identity_directory() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/identity/directory")
     return identity.directory_status()
 
 
 @app.post("/identity/sync")
-def identity_sync(request: DirectorySyncRequest) -> dict[str, Any]:
+async def identity_sync(request: DirectorySyncRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/identity/sync", body(request))
     result = identity.sync_directory(actor=request.actor)
     events.record_identity_sync(result)
     return result
 
 
 @app.post("/identity/group-role-map")
-def identity_group_role_map(request: GroupRoleMappingRequest) -> dict[str, Any]:
+async def identity_group_role_map(request: GroupRoleMappingRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/identity/group-role-map", body(request))
     try:
         result = identity.update_group_role(group_dn=request.group, role=request.role, actor=request.actor)
     except ValueError as exc:
@@ -327,7 +381,10 @@ def identity_group_role_map(request: GroupRoleMappingRequest) -> dict[str, Any]:
 
 
 @app.get("/identity/access-preview/{user_id}")
-def identity_access_preview(user_id: str, external: bool = True) -> dict[str, Any]:
+async def identity_access_preview(user_id: str, external: bool = True) -> dict[str, Any]:
+    if runtime.configured():
+        suffix = "true" if external else "false"
+        return await proxy_runtime("GET", f"/identity/access-preview/{user_id}?external={suffix}")
     return identity.access_preview(user_id=user_id, external=external)
 
 
@@ -337,22 +394,30 @@ def onboarding_flow() -> dict[str, Any]:
 
 
 @app.get("/graph")
-def graph() -> dict[str, Any]:
+async def graph() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/graph")
     return store.graph()
 
 
 @app.get("/tasks")
-def tasks() -> dict[str, Any]:
+async def tasks() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/tasks")
     return {"tasks": store.tasks}
 
 
 @app.get("/approvals")
-def approvals() -> dict[str, Any]:
+async def approvals() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/approvals")
     return {"approvals": store.approvals}
 
 
 @app.post("/approvals/{approval_id}/decision")
-def decide_approval(approval_id: str, request: ApprovalDecisionRequest) -> dict[str, Any]:
+async def decide_approval(approval_id: str, request: ApprovalDecisionRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", f"/approvals/{approval_id}/decision", body(request))
     try:
         approval = store.decide_approval(
             approval_id=approval_id,
@@ -369,18 +434,24 @@ def decide_approval(approval_id: str, request: ApprovalDecisionRequest) -> dict[
 
 
 @app.get("/audit")
-def audit() -> dict[str, Any]:
+async def audit() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/audit")
     return {"audit_runs": store.audit_runs}
 
 
 @app.post("/tools/get_context")
 async def get_context(request: GoalRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/tools/get_context", body(request), timeout=120)
     await ensure_demo_memory()
     return retrieval.get_context(goal=request.goal, role=request.role, user_id=request.user_id, external=True)
 
 
 @app.post("/context/query")
 async def context_query(request: ContextQueryRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/context/query", body(request), timeout=120)
     await ensure_demo_memory()
     return await retrieval.query_context_core(
         question=request.question,
@@ -395,17 +466,23 @@ async def context_query(request: ContextQueryRequest) -> dict[str, Any]:
 
 @app.get("/context/eval")
 async def context_eval() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("GET", "/context/eval", timeout=120)
     await ensure_demo_memory()
     return await retrieval.evaluate_context_core()
 
 
 @app.post("/tools/prepare_report")
-def prepare_report() -> dict[str, Any]:
+async def prepare_report() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/tools/prepare_report")
     return agent.prepare_report()
 
 
 @app.post("/tools/policy_check")
-def policy_check(request: PolicyRequest) -> dict[str, Any]:
+async def policy_check(request: PolicyRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/tools/policy_check", body(request))
     return policy.evaluate_output(
         text=request.text,
         citations=request.citations,
@@ -414,11 +491,15 @@ def policy_check(request: PolicyRequest) -> dict[str, Any]:
 
 
 @app.post("/tools/create_tasks")
-def create_tasks() -> dict[str, Any]:
+async def create_tasks() -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/tools/create_tasks")
     return {"tasks": agent.create_tasks()}
 
 
 @app.post("/tools/vector_search")
 async def vector_search(request: VectorSearchRequest) -> dict[str, Any]:
+    if runtime.configured():
+        return await proxy_runtime("POST", "/tools/vector_search", body(request), timeout=120)
     await ensure_demo_memory()
     return await vector_memory.search(query=request.query, limit=request.limit)

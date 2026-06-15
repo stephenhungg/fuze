@@ -50,8 +50,8 @@ def test_health_reports_local_runtime_surfaces():
     assert response.status_code == 200
     data = response.json()
     assert data["cloud_llm_calls"] == 0
-    assert data["mode"] in {"hosted_preview", "gb10_runtime", "gb10_runtime_unreachable"}
-    assert data["runtime"]["gb10"]["execution"] in {"hosted_preview", "gb10_runtime", "gb10_runtime_unreachable"}
+    assert data["mode"] in {"hosted_preview", "local_runtime", "gb10_runtime", "gb10_runtime_unreachable"}
+    assert data["runtime"]["gb10"]["execution"] in {"hosted_preview", "local_runtime", "gb10_runtime", "gb10_runtime_unreachable"}
     assert "ollama" in data
     assert "qdrant" in data
     assert data["identity"]["provider"] == "demo-adapter"
@@ -66,9 +66,29 @@ def test_system_runtime_is_honest_about_gb10_boundary():
     assert data["cloud_llm_calls"] == 0
     assert data["security_boundary"]["raw_public_gb10_access"] is False
     assert data["security_boundary"]["requires_private_tunnel"] is True
-    assert data["gb10"]["execution"] in {"hosted_preview", "gb10_runtime", "gb10_runtime_unreachable"}
+    assert data["gb10"]["execution"] in {"hosted_preview", "local_runtime", "gb10_runtime", "gb10_runtime_unreachable"}
     if data["gb10"]["execution"] == "hosted_preview":
         assert data["local_execution"]["provider"] == "deterministic demo engine"
+
+
+def test_configured_gb10_runtime_failures_do_not_fall_back_to_preview(monkeypatch):
+    from api import runtime
+
+    previous_url = runtime.GB10_RUNTIME_URL
+    previous_token = runtime.GB10_RUNTIME_TOKEN
+    runtime.GB10_RUNTIME_URL = "http://127.0.0.1:9"
+    runtime.GB10_RUNTIME_TOKEN = "test-token"
+    try:
+        response = client.post(
+            "/agent/run",
+            json={"goal": "get us ready for the anderson foundation report", "role": "grant_manager"},
+        )
+    finally:
+        runtime.GB10_RUNTIME_URL = previous_url
+        runtime.GB10_RUNTIME_TOKEN = previous_token
+
+    assert response.status_code == 502
+    assert "gb10 runtime unreachable" in response.json()["detail"]
 
 
 def test_static_seo_files_are_served_by_app():
