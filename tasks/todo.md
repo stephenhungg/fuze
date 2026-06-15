@@ -2,7 +2,8 @@
 
 - [x] replace the root landing page with the supplied architectural landing direction
 - [x] keep workspace routing and chat interface unchanged
-- [ ] verify locally, deploy, and smoke-test production
+- [x] verify locally, deploy, and smoke-test production
+- [x] add more generated landing assets and svg architecture where appropriate
 
 ## current landing update
 
@@ -11,6 +12,7 @@
 - avoid remote landing assets so the page stays aligned with the offline/local-first demo.
 - generated a local hero bitmap for the landing and preserved the reference motion language with gsap reveal, stagger, counters, and parallax.
 - matched the palette reference: vibrant orange, off-white, grey sand, deep taupe, and pitch black.
+- added generated document-ingestion and observability/approval visuals, plus an inline svg architecture diagram for the local context core flow.
 
 - [x] inspect current retrieval, vector memory, and graph boundaries
 - [x] add local context core query contract for agent-to-agent retrieval

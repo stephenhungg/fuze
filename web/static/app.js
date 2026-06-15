@@ -135,7 +135,7 @@ function animateRoute(route) {
   );
   window.gsap.fromTo(
     view.querySelectorAll(
-      ".message, .landing-brief, .landing-statement, .landing-band, .landing-system-grid article, .onboarding-board article, .admin-section, .auth-panel, .auth-side",
+      ".message, .landing-brief, .landing-statement, .landing-band, .landing-system-grid article, .landing-media-card, .landing-architecture, .onboarding-board article, .admin-section, .auth-panel, .auth-side",
     ),
     { autoAlpha: 0, y: 10 },
     { autoAlpha: 1, y: 0, duration: 0.32, stagger: 0.035, ease: "power2.out", overwrite: "auto" },
@@ -170,6 +170,12 @@ function animateLanding(view) {
     nodes,
     { autoAlpha: 0, y: 14 },
     { autoAlpha: 1, y: 0, duration: 0.55, stagger: 0.08, delay: 0.18, ease: "power2.out", overwrite: "auto" },
+  );
+
+  window.gsap.fromTo(
+    view.querySelectorAll(".landing-media-card img"),
+    { scale: 1.08, autoAlpha: 0.76 },
+    { scale: 1.02, autoAlpha: 1, duration: 0.9, stagger: 0.08, ease: "power3.out", overwrite: "auto" },
   );
 
   view.querySelectorAll("[data-count-to]").forEach((element) => {

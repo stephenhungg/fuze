@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>fuze</title>
-    <link rel="stylesheet" href="/static/styles.css?v=asset-motion-v2" />
+    <link rel="stylesheet" href="/static/styles.css?v=asset-motion-v3" />
   </head>
   <body>
     <header class="site-nav">
@@ -90,6 +90,79 @@
               <strong>Observability for nontechnical teams</strong>
               <p>SSE events, audit trails, local runtime proof, and role decisions stay visible without admin-console chaos.</p>
             </article>
+          </section>
+
+          <section class="landing-image-grid" aria-label="fuze visual proof">
+            <article class="landing-media-card">
+              <img src="/static/assets/fuze-document-ingestion.png" alt="nonprofit documents flowing into a local context core" />
+              <div>
+                <span class="landing-kicker">Document ingestion</span>
+                <h2>Private files become governed context.</h2>
+                <p>SharePoint, Drive, CRM exports, case notes, and board packets are converted into policy-tagged memory before any agent can use them.</p>
+              </div>
+            </article>
+            <article class="landing-media-card">
+              <img src="/static/assets/fuze-observability-approvals.png" alt="local agent events streaming into approval checkpoints" />
+              <div>
+                <span class="landing-kicker">Agent observability</span>
+                <h2>Always-on work stays inspectable.</h2>
+                <p>Every long-running agent action emits evidence, approval state, source context, and local-runtime proof for the team.</p>
+              </div>
+            </article>
+          </section>
+
+          <section class="landing-architecture" aria-label="fuze architecture diagram">
+            <div>
+              <span class="landing-kicker">Local architecture</span>
+              <h2>One appliance. many agents. one source of truth.</h2>
+            </div>
+            <svg viewBox="0 0 980 360" role="img" aria-labelledby="architecture-title architecture-desc">
+              <title id="architecture-title">fuze local context architecture</title>
+              <desc id="architecture-desc">sources flow through identity policy into a local context core, then to agents, approvals, and staff chat.</desc>
+              <defs>
+                <marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z"></path>
+                </marker>
+              </defs>
+              <g class="svg-grid">
+                <path d="M40 60 H940"></path>
+                <path d="M40 180 H940"></path>
+                <path d="M40 300 H940"></path>
+                <path d="M180 32 V328"></path>
+                <path d="M420 32 V328"></path>
+                <path d="M660 32 V328"></path>
+                <path d="M820 32 V328"></path>
+              </g>
+              <g class="svg-boxes">
+                <rect x="62" y="74" width="170" height="72"></rect>
+                <text x="86" y="106">documents</text>
+                <text x="86" y="126">drive / crm / cases</text>
+                <rect x="62" y="214" width="170" height="72"></rect>
+                <text x="86" y="246">directory</text>
+                <text x="86" y="266">groups / roles</text>
+                <rect x="312" y="144" width="190" height="84"></rect>
+                <text x="338" y="178">policy layer</text>
+                <text x="338" y="198">role + pii gates</text>
+                <rect x="566" y="120" width="206" height="132" class="svg-core"></rect>
+                <text x="598" y="172">context core</text>
+                <text x="598" y="194">hybrid retrieval</text>
+                <text x="598" y="216">graph traversal</text>
+                <rect x="830" y="72" width="112" height="62"></rect>
+                <text x="852" y="108">agents</text>
+                <rect x="830" y="158" width="112" height="62"></rect>
+                <text x="850" y="194">approvals</text>
+                <rect x="830" y="244" width="112" height="62"></rect>
+                <text x="862" y="280">chat</text>
+              </g>
+              <g class="svg-lines">
+                <path d="M232 110 C270 110 276 174 312 174"></path>
+                <path d="M232 250 C280 250 274 202 312 202"></path>
+                <path d="M502 186 H566"></path>
+                <path d="M772 162 C802 132 808 104 830 104"></path>
+                <path d="M772 186 H830"></path>
+                <path d="M772 210 C804 228 808 272 830 272"></path>
+              </g>
+            </svg>
           </section>
         </div>
       </section>
@@ -342,6 +415,6 @@
       </section>
     </main>
     <script src="/static/vendor/gsap.min.js?v=3.12.5-local"></script>
-    <script src="/static/app.js?v=asset-motion-v2"></script>
+    <script src="/static/app.js?v=asset-motion-v3"></script>
   </body>
 </html>
