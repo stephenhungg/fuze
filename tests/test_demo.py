@@ -40,6 +40,9 @@ def test_agent_run_produces_hackathon_demo_packet():
     assert len(packet["funders"]) == 3
     assert len(packet["programs"]) == 3
     assert len(packet["metrics"]) == 4
+    assert "five required pieces" in data["response"]
+    assert "meals served" in data["response"]
+    assert "approval" in data["response"]
     assert "may volunteer hours" in packet["missing_info"][0]["label"]
     assert any(item["metadata"].get("derived_from") == "sample_data/harbor_light" for item in packet["allowed_context"])
     assert any(item["source"] == "case_notes.txt" for item in packet["blocked_context"])
