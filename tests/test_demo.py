@@ -148,7 +148,9 @@ def test_chat_endpoint_rewrites_followups_with_thread_history():
     assert data["effective_goal"] == "what approvals are needed for the anderson report?"
     assert "executive director" in data["response"]
     assert "program lead" in data["response"]
-    assert data["chat_runtime"]["mode"] == "history-aware chat turn"
+    assert data["chat_runtime"]["mode"] == "history-aware deterministic chat turn"
+    assert "fuze-context-core.query" in data["chat_runtime"]["tool_calls"]
+    assert data["llm_generation"]["enabled"] is False
 
 
 def test_chat_endpoint_uses_client_history_for_followups():

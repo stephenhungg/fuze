@@ -167,3 +167,53 @@ def local_inference_probe(goal: str, readiness_score: int | None = None) -> dict
             "error": str(exc),
             "cloud_calls": 0,
         }
+
+
+async def local_chat_completion(prompt: str, *, max_tokens: int = 420) -> dict[str, Any]:
+    """generate the actual chat answer with the local ollama model when enabled."""
+    if not LOCAL_LLM_ENABLED:
+        return {
+            "enabled": False,
+            "available": False,
+            "model": LOCAL_LLM_MODEL,
+            "reason": "set FUZE_ENABLE_LOCAL_LLM=1 on the runtime host to enable local chat generation",
+            "cloud_calls": 0,
+        }
+
+    try:
+        async with httpx.AsyncClient(timeout=60) as client:
+            response = await client.post(
+                f"{OLLAMA_HOST}/api/generate",
+                json={
+                    "model": LOCAL_LLM_MODEL,
+                    "prompt": prompt,
+                    "stream": False,
+                    "think": False,
+                    "options": {
+                        "temperature": 0.2,
+                        "num_predict": max_tokens,
+                        "top_p": 0.9,
+                    },
+                },
+            )
+            response.raise_for_status()
+        payload = response.json()
+        return {
+            "enabled": True,
+            "available": True,
+            "provider": "ollama",
+            "host": OLLAMA_HOST,
+            "model": LOCAL_LLM_MODEL,
+            "response": payload.get("response", "").strip(),
+            "cloud_calls": 0,
+        }
+    except Exception as exc:
+        return {
+            "enabled": True,
+            "available": False,
+            "provider": "ollama",
+            "host": OLLAMA_HOST,
+            "model": LOCAL_LLM_MODEL,
+            "error": str(exc),
+            "cloud_calls": 0,
+        }
